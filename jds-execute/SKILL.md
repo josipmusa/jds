@@ -1,0 +1,138 @@
+---
+name: jds-execute
+description: Use when a confirmed implementation plan exists under docs/jds/plans/ and you need to execute it task by task using subagents with context isolation. Invoke after jds-plan completes, or when the user asks to execute or implement an existing plan.
+---
+
+# JDS Execute
+
+**Type: Flexible** — adapt subagent dispatch to the platform's capabilities, but the task loop structure and context isolation are non-negotiable.
+
+Works through an implementation plan task by task. Each task is executed by an isolated subagent that receives only what it needs — never session history.
+
+## Prerequisites
+
+A confirmed plan file must exist under `docs/jds/plans/`. If it does not, invoke jds-plan first.
+
+## Context Isolation
+
+This principle is the foundation of reliable subagent execution:
+
+- Construct each subagent's prompt from only the current task's text, the spec goal, the relevant file structure, and direct dependencies from prior completed tasks.
+- Never pass the full plan, session history, or unrelated context.
+- Each subagent starts fresh with a focused, self-contained prompt.
+
+The reason this matters: subagents that inherit session context make assumptions from earlier conversation that may no longer be accurate. Isolated context forces each task to be self-contained and verifiable.
+
+## Per-Task Loop
+
+For each task in the plan:
+
+### 1. Extract Task Context
+
+Read the current task's text from the plan file. Identify:
+- The files involved
+- Any outputs from prior tasks this one depends on
+- The verification command and expected output
+
+### 2. Dispatch Implementer
+
+Send a subagent with this structure:
+
+```
+## Task
+[Exact task text from the plan]
+
+## Project Context
+Goal: [one-sentence goal from the spec]
+Relevant file structure: [only the files this task touches or depends on]
+
+## Dependencies from Prior Tasks
+[List any files created or modified by earlier tasks that this task builds on.
+Include the current content of those files if the task depends on them.]
+
+## Rules
+- Follow TDD: write the failing test first, confirm it fails, then implement.
+- Self-review your work before reporting: check that the code matches the task
+  requirements exactly — nothing more, nothing less.
+- Run the verification command and include the output in your response.
+```
+
+### 3. Dispatch Compliance Reviewer
+
+After the implementer reports completion, send a separate subagent to verify:
+
+```
+## Review Task
+Verify that the implementation matches the task requirements exactly.
+
+## Task Requirements
+[Exact task text from the plan]
+
+## Verification
+- Read the actual files that were created or modified.
+- Compare line-by-line against the task requirements.
+- Check for missing pieces AND extra features not in the spec.
+- Run the verification command independently.
+
+## Response Format
+- COMPLIANT: Implementation matches requirements exactly.
+- ISSUES: [List each issue with file:line reference]
+```
+
+Do NOT trust the implementer's self-report. The reviewer must verify independently.
+
+### 4. Handle Issues
+
+If the compliance reviewer finds issues:
+- Send the issues back to a new implementer subagent with the fix instructions.
+- Re-review after fixes.
+- Maximum 3 iterations per task. If still failing after 3, surface to the human.
+
+### 5. Test Naming Convention
+
+For tasks that write tests, include this in the subagent prompt:
+
+```
+Test method names must follow this pattern:
+  When_<SomeAction>_Expect_<Result>
+
+Examples:
+  When_UserSubmitsEmptyForm_Expect_ValidationFails
+  When_ValidTokenProvided_Expect_AuthSucceeds
+  When_DuplicateEmail_Expect_RegistrationRejected
+```
+
+### 6. Mark Complete
+
+After compliance review passes:
+- Update the plan file: check the task's checkbox.
+- Move to the next task.
+
+### 7. Completion
+
+When all tasks are complete, announce and invoke jds-finish:
+
+"All plan tasks are complete. Using jds-finish for final verification and cleanup."
+
+## Blocking Rule
+
+If any task's tests fail after implementation and the implementer cannot fix them within 3 iterations, do not proceed to the next task. Surface the failure to the human explicitly:
+
+"Task N is blocked: [description of the failure]. The tests fail with [specific error]. I've attempted 3 fix iterations without success. How would you like to proceed?"
+
+At this point, consider invoking jds-debug for systematic root-cause analysis.
+
+## No Committing
+
+The implementation loop writes and verifies code. It does not commit. Committing is the responsibility of the calling skill or the developer after the full workflow completes.
+
+## Common Mistakes
+
+| Mistake | Why It Matters |
+|---------|---------------|
+| Passing full plan to subagent | Context pollution — subagent makes assumptions from other tasks |
+| Passing session history | Stale context causes incorrect implementations |
+| Trusting implementer's self-report | Implementers miss their own mistakes — independent review catches them |
+| Continuing past a failed task | Downstream tasks build on broken foundations |
+| More than 3 fix iterations | Diminishing returns — the human needs to weigh in |
+| Committing inside the loop | Not owned by this skill |
