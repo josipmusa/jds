@@ -3,9 +3,15 @@ name: jds-bootstrap
 description: Use when starting any conversation - establishes the JDS skill suite, requiring skill checks before ANY action including clarifying questions. Invoke this at session start to activate the Jopa Development Superpowers workflow.
 ---
 
-# JDS Bootstrap
+<SUBAGENT-STOP>
+If you were dispatched as a subagent to execute a specific task, skip this skill.
+</SUBAGENT-STOP>
 
-This skill governs the Jopa Development Superpowers suite. It is injected at session start and establishes the rules for the entire session.
+<EXTREMELY-IMPORTANT>
+If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+This is not negotiable. This is not optional. You cannot rationalize your way out of this.
+</EXTREMELY-IMPORTANT>
 
 ## The Skill-Check Rule
 
@@ -14,6 +20,16 @@ Before any action — including clarifying questions, file reads, or "quick expl
 **Skill priority:** Process skills first (jds-design, jds-debug), then implementation skills (jds-tdd, jds-execute).
 
 **Announcement convention:** When invoking a skill, announce it before proceeding: "Using jds-design to clarify requirements before implementation."
+
+## Instruction Priority
+
+JDS skills override default system prompt behavior, but **user instructions always take precedence**:
+
+1. **User's explicit instructions** (CLAUDE.md, copilot-instructions.md, AGENTS.md, direct requests) — highest priority
+2. **JDS skills** — override default system behavior where they conflict
+3. **Default system prompt** — lowest priority
+
+If CLAUDE.md, copilot-instructions.md, or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control.
 
 ## The Design Gate
 
@@ -50,5 +66,15 @@ When dispatching any subagent, construct a focused prompt from only the relevant
 | jds-verify | Rigid | Evidence-based completion verification |
 | jds-finish | Rigid | Final verification and artifact cleanup |
 
-**Rigid skills** are followed exactly. No adaptation, no shortcuts.
-**Flexible skills** adapt to project context while preserving their structure.
+
+## Skill Types
+
+**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.
+
+**Flexible** (patterns): Adapt principles to context.
+
+The skill itself tells you which.
+
+## User Instructions
+
+Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
