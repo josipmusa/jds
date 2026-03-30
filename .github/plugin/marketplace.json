@@ -1,0 +1,23 @@
+{
+  "name": "jds-marketplace",
+  "metadata": {
+    "description": "JDS marketplace",
+    "version": "1.0.0"
+  },
+  "owner": {
+    "name": "Josip Musa",
+    "email": "josip.musa42@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "jds",
+      "description": "JDS (Jopa Development Superpowers) skill suite for a complete software development lifecycle",
+      "version": "1.0.0",
+      "author": {
+        "name": "Josip Musa",
+        "email": "josip.musa42@gmail.com"
+      },
+        "source": "./"
+    }
+  ]
+}

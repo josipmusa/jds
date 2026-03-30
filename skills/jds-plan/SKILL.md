@@ -1,6 +1,6 @@
 ---
 name: jds-plan
-description: Use after a spec has been confirmed via jds-design, to translate it into an executable implementation plan. Requires a spec file to exist under docs/jds/specs/. Invoke when transitioning from design to implementation, or when the user asks to plan how to build something that already has a spec.
+description: Use after a spec has been confirmed via jds-think, to translate it into an executable implementation plan. Requires a spec file to exist under docs/jds/specs/. Invoke when transitioning from design to implementation, or when the user asks to plan how to build something that already has a spec.
 ---
 
 # JDS Plan
@@ -11,7 +11,7 @@ Translates a confirmed spec into an executable implementation plan. Every plan t
 
 ## Prerequisites
 
-A confirmed spec file must exist under `docs/jds/specs/`. If it does not, invoke jds-design first. Do not create a plan from verbal agreements or chat history alone — the spec file is the source of truth.
+A confirmed spec file must exist under `docs/jds/specs/`. If it does not, invoke jds-think first. Do not create a plan from verbal agreements or chat history alone — the spec file is the source of truth.
 
 ## Flow
 
@@ -107,9 +107,14 @@ Fix all issues inline before proceeding.
 
 ### Step 4: Human Review
 
-Present the final plan to the user for review. Keep this brief — the plan document itself is the deliverable.
+Use `ask_user` to present the plan and ask for confirmation before proceeding:
 
-"I've saved the implementation plan to `docs/jds/plans/YYYY-MM-DD-<feature-name>.md`. It has N tasks following TDD structure. Please take a look and let me know if anything needs adjustment."
+```
+ask_user(
+  question="I've saved the implementation plan to docs/jds/plans/YYYY-MM-DD-<feature-name>.md. It has N tasks following TDD structure. Does everything look correct, or do you want to adjust anything before I start executing?",
+  choices=["Looks good — start executing", "I have adjustments"]
+)
+```
 
 ### Step 5: Handoff
 

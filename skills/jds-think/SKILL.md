@@ -1,13 +1,15 @@
 ---
-name: jds-design
-description: Use before writing any code for a new feature, significant change, or non-trivial task. This is the design and requirements gate - every task goes through it, including ones that seem "simple." Invoke whenever implementation work is about to begin, when requirements are unclear, or when the user asks to build, add, fix, or change something.
+name: jds-think
+description: Use before writing any code, asking clarifying questions, or taking any action on a task. This is the exploration, communication, and design gate — the most important skill in the suite. Every task passes through it, regardless of perceived simplicity. Invoke whenever implementation work is about to begin, when requirements are unclear, or when the user asks to build, add, fix, or change something. Also invoke for lightweight tasks that don't need a full design — jds-think scales down.
 ---
 
-# JDS Design
+# JDS Think
 
 **Type: Flexible** — adapt to project context, but the structure must be followed.
 
-This is the most important skill in the JDS suite. Getting the design right prevents wasted implementation cycles. Every task passes through this gate — simple tasks get a short design, complex tasks get a thorough one.
+This is the most important skill in the JDS suite. It handles exploration, communication, and design. Getting this right prevents wasted implementation cycles. Every task passes through this gate — simple tasks get a short pass through it, complex tasks get a thorough one.
+
+**ask_user rule:** Every question to the user MUST go through the `ask_user` tool. Never ask questions by ending a message with plain text. This includes design confirmations, approach decisions, and spec approval.
 
 ## Flow
 
@@ -30,12 +32,12 @@ Before asking detailed questions, evaluate whether the request is appropriately 
 
 - If it describes multiple independent subsystems, flag this immediately. Do not spend questions refining details of a project that needs decomposition.
 - Help the user split into sub-projects: what are the independent pieces, how do they relate, what order should they be built?
-- Each sub-project gets its own full jds-design, jds-plan, jds-execute cycle.
+- Each sub-project gets its own full jds-think, jds-plan, jds-execute cycle.
 - For appropriately scoped requests, continue to Step 3.
 
 ### Step 3: Ask Clarifying Questions
 
-One question per message. Never combine multiple questions in a single message — this leads to shallow answers and missed nuance.
+One question per message via `ask_user`. Never combine multiple questions — this leads to shallow answers and missed nuance.
 
 - Prefer multiple-choice where possible. Give 2-3 options with your recommendation.
 - Do not ask for information that can be inferred from the codebase.
@@ -52,9 +54,11 @@ For each approach:
 - What it costs (specific drawback)
 - Your recommendation and reasoning
 
+Use `ask_user` (with choices) to confirm which approach the user wants to proceed with.
+
 ### Step 5: Present Design in Sections
 
-Break the design into digestible sections for human review. Each section should be short enough to actually read and evaluate. Wait for confirmation before proceeding to the next section.
+Break the design into digestible sections for human review. Each section should be short enough to actually read and evaluate. After each section, use `ask_user` to confirm before proceeding to the next.
 
 This prevents the "wall of text" problem where the user rubber-stamps a design they didn't actually read.
 
@@ -104,9 +108,16 @@ Fix all issues inline before proceeding.
 
 ### Step 8: Human Confirmation
 
-Ask the user to review the saved spec file. Do not continue until they confirm.
+Use `ask_user` to ask the user to confirm the spec before continuing:
 
-"I've saved the spec to `docs/jds/specs/YYYY-MM-DD-<feature-name>.md`. Please review it and let me know if anything needs adjustment before I proceed to planning."
+```
+ask_user(
+  question="I've saved the spec to docs/jds/specs/YYYY-MM-DD-<feature-name>.md. Does everything look correct, or do you want to adjust anything before I proceed to planning?",
+  choices=["Looks good — proceed to planning", "I have adjustments"]
+)
+```
+
+Do not continue to planning until the user confirms.
 
 ### Step 9: Handoff
 
@@ -120,6 +131,7 @@ Announce the transition and invoke jds-plan:
 |---------|---------------|
 | Asking the user to explain code you could read | Wastes their time and signals laziness |
 | Combining multiple questions | Gets shallow, incomplete answers |
+| Ending a message with a plain-text question | Breaks the session — use ask_user instead |
 | Skipping scope assessment | Leads to monolithic plans that fail mid-execution |
 | Presenting 5+ approaches | Paralyzes decision-making — 2-3 is the sweet spot |
 | Writing the spec without sectional review | User rubber-stamps designs they didn't read |

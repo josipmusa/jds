@@ -1,0 +1,12 @@
+{
+  "name": "jds",
+  "description": "JDS (Jopa Development Superpowers) skill suite for a complete software development lifecycle",
+  "version": "1.0.0",
+  "author": {
+    "name": "Josip Musa",
+    "email": "josip.musa42@gmail.com"
+  },
+  "agents": "./agents/",
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json"
+}
