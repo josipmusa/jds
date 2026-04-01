@@ -2,7 +2,7 @@
 
 ## About This Project
 
-**JDS (Jopa Development Superpowers)** is a GitHub Copilot CLI plugin that enforces a structured software development lifecycle through a suite of skills: `jds-think`, `jds-plan`, `jds-execute`, `jds-tdd`, `jds-debug`, `jds-verify`, and `jds-finish`. The plugin is defined in `plugin.json`, skills live under `skills/`, and custom agents live under `agents/`.
+**JDS** is a GitHub Copilot CLI plugin that enforces a structured software development lifecycle through a suite of skills: `jds-think`, `jds-plan`, `jds-execute`, `jds-tdd`, `jds-debug`, `jds-verify`, and `jds-finish`. The plugin is defined in `plugin.json`, skills live under `skills/`, and custom agents live under `agents/`.
 
 ---
 

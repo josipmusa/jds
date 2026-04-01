@@ -24,7 +24,7 @@ escape_for_json() {
 }
 
 jds_bootstrap_escaped=$(escape_for_json "$jds_bootstrap_content")
-session_context="<EXTREMELY_IMPORTANT>\nYou have JDS (Jopa Development Superpowers).\n\n**Below is the full content of your 'jds:jds-bootstrap' skill — your introduction to the JDS workflow :**\n\n${jds_bootstrap_escaped}\n</EXTREMELY_IMPORTANT>"
+session_context="<EXTREMELY_IMPORTANT>\nYou have JDS (the JDS skill suite).\n\n**Below is the full content of your 'jds:jds-bootstrap' skill — your introduction to the JDS workflow :**\n\n${jds_bootstrap_escaped}\n</EXTREMELY_IMPORTANT>"
 
 printf '{\n  "additionalContext": "%s"\n}\n' "$session_context"
 
