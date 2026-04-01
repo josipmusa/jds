@@ -1,0 +1,133 @@
+# JDS
+
+**A skill suite that makes your AI coding assistant follow a real software development process.**
+
+JDS is a [GitHub Copilot CLI](https://github.com/features/copilot/cli) plugin that enforces structured workflows — design before code, tests before implementation, evidence before completion claims. It turns your AI pair programmer from a code-spewing autocomplete into a disciplined software engineer that can work for hours on complex tasks without losing context or getting lost.
+
+## Why?
+
+AI coding assistants are powerful but undisciplined. Without structure, they:
+
+- Skip design and jump straight to code
+- Write tests after implementation (or not at all)
+- Claim "it works" without running anything
+- Lose track of progress mid-task
+- Fix symptoms instead of root causes
+
+JDS fixes this by enforcing a skill-based workflow that gates every phase of development.
+
+## The Workflow
+
+```
+User Request
+    ↓
+jds-think       → Explore, clarify, design, write spec
+    ↓
+jds-plan        → Break spec into atomic, verifiable tasks
+    ↓
+jds-execute     → Execute tasks via isolated subagents
+    ├── jds-tdd     → RED → GREEN → REFACTOR (every time)
+    └── jds-debug   → Systematic root-cause analysis (when things break)
+    ↓
+jds-verify      → Evidence-based completion (actual output, not "I think it works")
+    ↓
+jds-finish      → Clean up working artifacts
+```
+
+Every task passes through this pipeline. Simple tasks get a lightweight pass. Complex tasks get the full treatment. But nothing skips the process entirely.
+
+## Skills
+
+| Skill | Type | What It Does |
+|-------|------|-------------|
+| **jds-bootstrap** | Flexible | Session entry point. Enforces skill-check before any action. Detects incomplete work for resumption. |
+| **jds-think** | Flexible | The design gate. Explores codebase, asks clarifying questions, proposes approaches, writes specs. |
+| **jds-plan** | Flexible | Translates specs into atomic tasks (2-5 min each). No placeholders, no hand-waving. |
+| **jds-execute** | Flexible | Runs tasks via isolated subagents. Each gets only what it needs — never session history. |
+| **jds-tdd** | Rigid | Enforces RED-GREEN-REFACTOR. Tests first, always. Code written before tests? Delete it. |
+| **jds-debug** | Rigid | 4-phase root-cause analysis: Investigate → Analyze → Hypothesize → Fix. No symptom-patching. |
+| **jds-verify** | Rigid | Requires actual command output as evidence. "I believe this works" is not verification. |
+| **jds-finish** | Rigid | Cleans up specs, plans, and tracking state. Does not commit — that's your job. |
+
+**Rigid** skills follow exact protocols. No adaptation, no shortcuts.
+**Flexible** skills adapt to context but maintain their structure.
+
+## Agents
+
+| Agent | Role |
+|-------|------|
+| **explainer** | Translates code and systems into clear explanations |
+| **code-reviewer** | Senior reviewer focused on security, quality, and correctness |
+| **tester** | QA engineer that writes tests using `When_Action_Expect_Result` naming |
+
+## Commands
+
+| Command | What It Does |
+|---------|-------------|
+| **code-review** | Reviews current branch or a specific PR |
+| **security-audit-review** | Deep security audit — read-only, produces a report |
+
+## Installation
+
+### Step 1: Add the marketplace
+
+```bash
+copilot plugin marketplace add josipmusa/jds
+```
+
+### Step 2: Install the plugin
+
+```bash
+copilot plugin install jds@jds-marketplace
+```
+
+Or, from within an interactive Copilot CLI session, use the slash command equivalents:
+
+```
+/plugin marketplace add josipmusa/jds
+/plugin install jds@jds-marketplace
+```
+
+## Key Principles
+
+### Design Before Code
+Every task passes through `jds-think` before any code is written. A 2-minute design for a simple task is fine. Skipping design entirely is not.
+
+### Tests Before Implementation
+`jds-tdd` enforces RED-GREEN-REFACTOR on every code change. If code exists before a test, delete it and start over. This is not negotiable.
+
+### Evidence Over Claims
+`jds-verify` requires actual command output — not summaries, not reasoning, not "I believe this works." Run the tests. Show the output.
+
+### Context Isolation
+Subagents never inherit session history. Each task gets a focused, self-contained prompt with only what it needs. This prevents stale assumptions and forces verifiable outputs.
+
+### Interruption Recovery
+All task progress is tracked via SQL. If a session is interrupted, JDS detects incomplete work on the next session start and offers to resume from the last checkpoint.
+
+### No Placeholders
+Plans contain complete code, not "add validation" or "handle edge cases." Every task must be executable by a subagent without inferring intent.
+
+## Copilot Instructions
+
+JDS ships with a set of general-purpose copilot instructions at [`instructions/copilot-instructions.md`](instructions/copilot-instructions.md) — inspired by [Andrej Karpathy's coding agent guidelines](https://github.com/forrestchang/andrej-karpathy-skills/blob/main/CLAUDE.md). These are opinionated defaults that complement the skill suite:
+
+- **Think before coding** — state assumptions, surface ambiguity, ask instead of guessing
+- **Simplicity first** — minimum code that solves the problem, no speculative abstractions
+- **Surgical changes** — change only what's requested, match existing patterns
+- **Goal-driven execution** — define success criteria with exact verification commands
+- **No design artifacts in commits** — JDS working files are cleaned up before any git operation
+
+We recommend copying these instructions into your global Copilot instructions file (typically `~/.copilot/copilot-instructions.md`) so they apply across all your projects. If you already have your own instructions, JDS respects the priority chain: your instructions > JDS skills > system defaults.
+
+## Acknowledgements
+
+JDS is an adaptation of the [superpowers](https://github.com/obra/superpowers) repository by [@obra](https://github.com/obra), tailored specifically for GitHub Copilot CLI. The core philosophy — skill-based enforcement of software development discipline for AI agents — originates from that project. JDS adapts the concepts, restructures the skills for Copilot's plugin system, and adds Copilot-specific features like SQL-based task tracking for interruption recovery.
+
+## License
+
+MIT
+
+## Author
+
+Josip Musa ([@josipmusa](https://github.com/josipmusa))

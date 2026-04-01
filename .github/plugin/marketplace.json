@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "jds",
-      "description": "JDS (Jopa Development Superpowers) skill suite for a complete software development lifecycle",
+      "description": "JDS — a skill suite for a complete software development lifecycle",
       "version": "1.0.0",
       "author": {
         "name": "Josip Musa",

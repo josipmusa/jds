@@ -1,6 +1,6 @@
 ---
 name: jds-bootstrap
-description: Use when starting any conversation - establishes the JDS skill suite, requiring skill checks before ANY action including clarifying questions. Invoke this at session start to activate the Jopa Development Superpowers workflow.
+description: Use when starting any conversation - establishes the JDS skill suite, requiring skill checks before ANY action including clarifying questions. Invoke this at session start to activate the JDS workflow.
 ---
 
 <SUBAGENT-STOP>
