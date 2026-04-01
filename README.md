@@ -127,7 +127,3 @@ JDS is an adaptation of the [superpowers](https://github.com/obra/superpowers) r
 ## License
 
 MIT
-
-## Author
-
-Josip Musa ([@josipmusa](https://github.com/josipmusa))
