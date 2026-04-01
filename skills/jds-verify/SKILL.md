@@ -49,6 +49,18 @@ It must NOT contain:
 - Summary of what you think the tests would show
 - Reasoning about why the code is correct
 
+### 5. Verify Tracking Completeness
+
+Before accepting any completion claim, confirm all tracked tasks are done:
+
+```sql
+SELECT id, title, status FROM todos WHERE status != 'done';
+```
+
+If any non-done todos exist, verification **fails**. List the incomplete items and route back to jds-execute (for pending/in_progress tasks) or jds-debug (for blocked tasks).
+
+This prevents tasks from being silently skipped during execution.
+
 ## Failure Behavior
 
 If any verification step fails:

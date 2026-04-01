@@ -49,6 +49,36 @@ If your hypothesis cannot be tested with observable evidence, it is not a hypoth
 4. **Check for regressions.** Run the broader test suite to confirm nothing else broke.
 5. **Look for siblings.** If this bug was caused by a wrong assumption, search for the same assumption elsewhere. Fix all instances, not just the one that surfaced.
 
+## Iteration Tracking
+
+Track each debug attempt in the SQL tracking system. This provides data for the 3-attempt escalation rule and enables resumption if debugging is interrupted.
+
+**At the start of each debug attempt:**
+```sql
+INSERT INTO todos (id, title, description, status)
+VALUES ('debug-N-investigate', 'Debug attempt N: Investigate', 'Gathering evidence for hypothesis', 'in_progress');
+```
+
+**Track each phase completion (example: Investigate → Analyze):**
+```sql
+UPDATE todos SET status = 'done', updated_at = datetime('now') WHERE id = 'debug-N-investigate';
+INSERT INTO todos (id, title, status) VALUES ('debug-N-analyze', 'Debug attempt N: Analyze', 'in_progress');
+```
+
+Continue the same pattern through all four phases: `debug-N-investigate` → `debug-N-analyze` → `debug-N-hypothesize` → `debug-N-fix`
+
+**Enforce the escalation rule via SQL:**
+```sql
+SELECT count(*) FROM todos WHERE id LIKE 'debug-%-fix' AND status = 'blocked';
+```
+If count >= 3, escalate to the human immediately.
+
+**On successful fix:** mark all debug todos for that attempt as `done`.
+**On failed fix:** mark the fix todo as `blocked`:
+```sql
+UPDATE todos SET status = 'blocked', updated_at = datetime('now') WHERE id = 'debug-N-fix';
+```
+
 ## Escalation Rule
 
 If 3 or more fix attempts fail, **stop.** Do not try a fourth fix. Surface the situation to the human and question whether the architecture itself is the problem.

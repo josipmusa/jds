@@ -27,7 +27,24 @@ Delete JDS working artifacts unconditionally:
 
 These are AI working artifacts. They served their purpose during implementation and should not persist.
 
-### Step 3: Verify No Artifacts in Git
+### Step 3: Clean Up Tracking State
+
+Clear the SQL tracking state since all work has been verified complete:
+
+```sql
+DELETE FROM todo_deps;
+DELETE FROM todos;
+```
+
+This prevents stale tracking data from interfering with future sessions. The completion count should be included in the final report (Step 5).
+
+Record the count before deletion for the completion report:
+
+```sql
+SELECT count(*) as completed_tasks FROM todos WHERE status = 'done';
+```
+
+### Step 4: Verify No Artifacts in Git
 
 Confirm that no files under `docs/jds/` are staged or committed in git.
 
@@ -36,7 +53,7 @@ Confirm that no files under `docs/jds/` are staged or committed in git.
 - Verify that `docs/jds/` is listed in `.gitignore`.
 - If `.gitignore` was modified by JDS (to add `docs/jds/`), that change IS appropriate to keep — it prevents future accidental commits of JDS artifacts.
 
-### Step 4: Report Completion
+### Step 5: Report Completion
 
 Report what was accomplished. Keep it brief and factual:
 

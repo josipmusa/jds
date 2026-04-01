@@ -44,6 +44,42 @@ Each task must be 2-5 minutes of work. This granularity matters — it is what m
 
 **Do not include commit steps in tasks.** Committing is the responsibility of the caller or the developer, not the implementation loop.
 
+### Step 3: Track Tasks in SQL
+
+After writing the plan document, extract all tasks into the SQL tracking system. This enables interruption recovery and progress visibility throughout execution.
+
+For each task in the plan:
+
+```sql
+INSERT INTO todos (id, title, description, status)
+VALUES ('task-N-kebab-name', 'Task N: Descriptive name', 'Full task description including file paths and verification commands', 'pending');
+```
+
+**ID convention:** Use `task-N-kebab-description` format (e.g., `task-1-create-auth-validator`, `task-2-add-login-tests`).
+
+For tasks with sub-steps (individual file operations within a task), insert child todos:
+
+```sql
+INSERT INTO todos (id, title, description, status)
+VALUES ('task-N-step-M', 'Sub-step description', 'Details', 'pending');
+
+INSERT INTO todo_deps (todo_id, depends_on)
+VALUES ('task-N-step-M', 'task-N-kebab-name');
+```
+
+For sequential task dependencies:
+
+```sql
+INSERT INTO todo_deps (todo_id, depends_on)
+VALUES ('task-2-kebab-name', 'task-1-kebab-name');
+```
+
+Verify the tracking state after insertion:
+
+```sql
+SELECT id, title, status FROM todos ORDER BY created_at;
+```
+
 ### The No-Placeholders Rule
 
 These are plan failures — if you catch yourself writing any of these, the task is incomplete:
@@ -94,7 +130,7 @@ Every task must contain the actual content needed to execute it. A subagent read
 
 Save to `docs/jds/plans/YYYY-MM-DD-<feature-name>.md`. Do NOT commit this file.
 
-### Step 3: Plan Self-Review
+### Step 4: Plan Self-Review
 
 After writing the plan, review it inline. No subagent dispatch needed. Check:
 
@@ -105,7 +141,7 @@ After writing the plan, review it inline. No subagent dispatch needed. Check:
 
 Fix all issues inline before proceeding.
 
-### Step 4: Human Review
+### Step 5: Human Review
 
 Use `ask_user` to present the plan and ask for confirmation before proceeding:
 
@@ -116,7 +152,7 @@ ask_user(
 )
 ```
 
-### Step 5: Handoff
+### Step 6: Handoff
 
 Announce the transition and invoke jds-execute:
 
