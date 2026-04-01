@@ -30,16 +30,16 @@ Arrive at the conversation already informed. The user should not have to explain
 
 Before asking detailed questions, evaluate whether the request is appropriately scoped:
 
-- If it describes multiple independent subsystems, flag this immediately. Do not spend questions refining details of a project that needs decomposition.
-- Help the user split into sub-projects: what are the independent pieces, how do they relate, what order should they be built?
-- Each sub-project gets its own full jds-think, jds-plan, jds-execute cycle.
+- If it describes multiple independent subsystems, raise it as the first priority. Drilling into specifics of an over-scoped request wastes everyone's time.
+- Guide decomposition into independent sub-projects — identify the boundaries, dependencies, and a sensible build order.
+- Each sub-project runs through the complete skill pipeline independently: think → plan → execute.
 - For appropriately scoped requests, continue to Step 3.
 
 ### Step 3: Ask Clarifying Questions
 
-One question per message via `ask_user`. Never combine multiple questions — this leads to shallow answers and missed nuance.
+Ask a single question at a time using `ask_user`. Bundling questions together gets superficial responses and glosses over important details.
 
-- Prefer multiple-choice where possible. Give 2-3 options with your recommendation.
+- Default to multiple-choice with 2-3 options when the answer space is bounded. Lead with your recommended option.
 - Do not ask for information that can be inferred from the codebase.
 - Do not ask questions you could answer by reading existing code.
 - Each question should resolve a genuine ambiguity that affects the design.
@@ -48,19 +48,19 @@ One question per message via `ask_user`. Never combine multiple questions — th
 
 Present exactly 2-3 concrete approaches with explicit tradeoffs. Not a wall of options.
 
-For each approach:
-- What it looks like (brief structural description)
-- What it gains (specific benefit)
-- What it costs (specific drawback)
-- Your recommendation and reasoning
+Each approach should include:
+- A brief structural overview
+- The concrete advantage it provides
+- The tradeoff or limitation
+- Why you do or don't recommend it
 
 Use `ask_user` (with choices) to confirm which approach the user wants to proceed with.
 
 ### Step 5: Present Design in Sections
 
-Break the design into digestible sections for human review. Each section should be short enough to actually read and evaluate. After each section, use `ask_user` to confirm before proceeding to the next.
+Walk the user through the design one section at a time. Keep each section concise enough that they'll actually read it rather than skimming. After each section, use `ask_user` to confirm before proceeding to the next.
 
-This prevents the "wall of text" problem where the user rubber-stamps a design they didn't actually read.
+Long monolithic designs get rubber-stamped. Sectional presentation forces genuine engagement with each piece.
 
 ### Step 6: Write Spec Document
 
@@ -99,10 +99,10 @@ Before writing, ensure `docs/jds/` is present in `.gitignore`. If it is not, add
 
 After writing the spec, review it inline. No subagent dispatch needed. Check:
 
-1. **Placeholders:** Any TBDs, TODOs, or vague phrases like "appropriate handling"? Fix them.
-2. **Contradictions:** Do any sections contradict each other? Resolve them.
-3. **Scope:** Is this focused enough for a single implementation plan, or does it need decomposition?
-4. **Ambiguity:** Could any requirement be interpreted two different ways? Clarify it.
+1. **Incomplete items:** Search for "TBD", "TODO", or hand-wavy phrases like "handle appropriately." Replace each with a concrete decision.
+2. **Internal conflicts:** Do any sections promise contradictory behavior? Resolve them now.
+3. **Scope creep:** Can this be implemented as a single plan, or has it grown to need decomposition?
+4. **Double meanings:** Would two engineers read any requirement differently? Nail it down.
 
 Fix all issues inline before proceeding.
 

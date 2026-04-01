@@ -4,18 +4,18 @@ description: Use when starting any conversation - establishes the JDS skill suit
 ---
 
 <SUBAGENT-STOP>
-If you were dispatched as a subagent to execute a specific task, skip this skill.
+Subagents running isolated tasks should bypass this skill entirely.
 </SUBAGENT-STOP>
 
 <EXTREMELY-IMPORTANT>
-If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
-IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
-This is not negotiable. This is not optional. You cannot rationalize your way out of this.
+Any doubt about whether a skill is relevant — even the slightest — means you MUST invoke it immediately.
+APPLICABLE SKILLS ARE MANDATORY. THERE IS NO OPT-OUT MECHANISM.
+No justification, no shortcut, no internal reasoning can exempt you from this requirement.
 </EXTREMELY-IMPORTANT>
 
 ## The Skill-Check Rule
 
-Before any action — including clarifying questions, file reads, or "quick explorations" — check whether a JDS skill applies. If there is even a 1% chance a skill is relevant, invoke it. This is non-negotiable.
+Before any action — including clarifying questions, file reads, or "quick explorations" — check whether a JDS skill applies. When in doubt about relevance, always invoke. This is non-negotiable.
 
 **Skill priority:** Process skills first (jds-think, jds-debug), then implementation skills (jds-tdd, jds-execute).
 
@@ -23,13 +23,9 @@ Before any action — including clarifying questions, file reads, or "quick expl
 
 ## Instruction Priority
 
-JDS skills override default system prompt behavior, but **user instructions always take precedence**:
+The user is always the final authority. Their explicit directives — whether in CLAUDE.md, copilot-instructions.md, AGENTS.md, or spoken directly — supersede everything else. JDS skills sit one level below: they replace default system prompt behavior wherever the two conflict, but they never override the user. The default system prompt fills in whatever neither the user nor JDS addresses.
 
-1. **User's explicit instructions** (CLAUDE.md, copilot-instructions.md, AGENTS.md, direct requests) — highest priority
-2. **JDS skills** — override default system behavior where they conflict
-3. **Default system prompt** — lowest priority
-
-If CLAUDE.md, copilot-instructions.md, or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control.
+**Example:** if a user's configuration file forbids TDD but jds-tdd demands it, the user's configuration wins. Skills govern process; the user governs policy.
 
 ## The Design Gate
 
@@ -37,18 +33,18 @@ If you are about to write code and have not completed the design phase for this 
 
 ## Rationalization Blocker
 
-These thoughts mean STOP — you are rationalizing skipping a skill:
+If you catch yourself thinking any of the following, stop — you are looking for an excuse to skip a skill:
 
 | Thought | Correct Response |
 |---------|-----------------|
-| "This is just a small change" | Small changes cause big bugs. Check for skills. |
-| "I need more context first" | Skills tell you HOW to gather context. Check first. |
-| "Let me explore the codebase quickly" | jds-think includes exploration. Use it. |
-| "I already know how to do this" | Knowing how is not the same as following process. Check. |
-| "The user just wants a quick fix" | Quick fixes without design cause regressions. Check. |
-| "I'll write tests after" | jds-tdd exists for a reason. Check. |
-| "This doesn't need a formal design" | jds-think scales down. It handles simple tasks too. |
-| "Let me just start coding" | Code without design is the #1 failure mode. Stop. |
+| "This is trivial, no skill needed" | Trivial changes cause subtle bugs. Check for skills. |
+| "I should understand the code first" | Skills define how to explore. Consult them before exploring on your own. |
+| "A quick look at the repo won't hurt" | jds-think already includes structured exploration. Use it. |
+| "I already know how to do this" | Competence doesn't replace process. Check. |
+| "The user wants something fast" | Rushing without design creates regressions. Check. |
+| "I'll add tests afterward" | jds-tdd exists precisely for this impulse. Check. |
+| "This doesn't warrant a full design" | jds-think adapts to scope. It handles lightweight tasks. |
+| "Let me just start coding" | Code without design is the primary failure mode. Stop. |
 
 ## Context Isolation Principle
 
@@ -92,12 +88,8 @@ This enables the same interruption recovery that Claude Code's TodoWrite provide
 
 ## Skill Types
 
-**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.
-
-**Flexible** (patterns): Adapt principles to context.
-
-The skill itself tells you which.
+Skills fall into two categories. **Rigid** skills — such as TDD and debugging — demand exact adherence; loosening their discipline defeats their purpose. **Flexible** skills define guiding principles that you should mold to fit the situation at hand. Each skill declares its own category, so consult it when unsure.
 
 ## User Instructions
 
-Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
+A user directive defines the objective, not the process. Receiving "Add X" or "Fix Y" sets a goal — it does not authorize bypassing any skill or workflow step.
