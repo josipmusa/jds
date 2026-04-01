@@ -66,6 +66,29 @@ When dispatching any subagent, construct a focused prompt from only the relevant
 | jds-verify | Rigid | Evidence-based completion verification |
 | jds-finish | Rigid | Final verification and artifact cleanup |
 
+## Interruption Recovery
+
+On session start, check for incomplete work from a previous session:
+
+1. Query the SQL tracking state:
+   ```sql
+   SELECT id, title, status FROM todos WHERE status IN ('pending', 'in_progress') ORDER BY created_at;
+   ```
+2. If results exist, use `ask_user` to offer resumption:
+   ```
+   ask_user(
+     question="Found [N] incomplete tasks from a previous session. Would you like to resume or start fresh?",
+     choices=["Resume from last checkpoint", "Start fresh (clear tracking state)"]
+   )
+   ```
+3. If **resume**: announce "Resuming from last checkpoint" and invoke jds-execute with the existing plan.
+4. If **start fresh**: clear the tracking state and proceed normally:
+   ```sql
+   DELETE FROM todo_deps;
+   DELETE FROM todos;
+   ```
+
+This enables the same interruption recovery that Claude Code's TodoWrite provides — persistent task state that survives session boundaries.
 
 ## Skill Types
 

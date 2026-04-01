@@ -29,6 +29,45 @@ The goal is to prove the test works by making it pass with the simplest possible
 
 Now — and only now — clean up the implementation while keeping all tests green. Extract abstractions, improve naming, remove duplication. Run tests after every change to confirm nothing broke.
 
+## Phase Tracking
+
+Track each TDD phase in the SQL tracking system to enable interruption recovery mid-cycle:
+
+**Before RED:**
+```sql
+INSERT INTO todos (id, title, status) VALUES ('{task-id}-red', 'RED: Write failing test for {task-id}', 'in_progress');
+INSERT INTO todo_deps (todo_id, depends_on) VALUES ('{task-id}-red', '{task-id}');
+```
+
+**After RED (test confirmed failing):**
+```sql
+UPDATE todos SET status = 'done', updated_at = datetime('now') WHERE id = '{task-id}-red';
+```
+
+**Before GREEN:**
+```sql
+INSERT INTO todos (id, title, status) VALUES ('{task-id}-green', 'GREEN: Minimum implementation for {task-id}', 'in_progress');
+INSERT INTO todo_deps (todo_id, depends_on) VALUES ('{task-id}-green', '{task-id}');
+```
+
+**After GREEN (test passing):**
+```sql
+UPDATE todos SET status = 'done', updated_at = datetime('now') WHERE id = '{task-id}-green';
+```
+
+**Before REFACTOR:**
+```sql
+INSERT INTO todos (id, title, status) VALUES ('{task-id}-refactor', 'REFACTOR: Clean up {task-id}', 'in_progress');
+INSERT INTO todo_deps (todo_id, depends_on) VALUES ('{task-id}-refactor', '{task-id}');
+```
+
+**After REFACTOR (tests still green):**
+```sql
+UPDATE todos SET status = 'done', updated_at = datetime('now') WHERE id = '{task-id}-refactor';
+```
+
+Replace `{task-id}` with the parent task's SQL todo ID (e.g., `task-1-create-auth-validator`).
+
 ## Test Naming Convention
 
 Test method names must follow this pattern:

@@ -23,6 +23,22 @@ This principle is the foundation of reliable subagent execution:
 
 The reason this matters: subagents that inherit session context make assumptions from earlier conversation that may no longer be accurate. Isolated context forces each task to be self-contained and verifiable.
 
+## State-Driven Execution
+
+Before starting the task loop, query the tracking state to determine where to begin:
+
+```sql
+SELECT id, title, status FROM todos WHERE status != 'done' ORDER BY created_at;
+```
+
+If resuming after an interruption, this query identifies which tasks remain. Skip any tasks already marked `done` — do not re-execute completed work.
+
+Between tasks, report progress:
+
+```sql
+SELECT status, count(*) as cnt FROM todos GROUP BY status;
+```
+
 ## Per-Task Loop
 
 For each task in the plan:
@@ -106,7 +122,20 @@ Examples:
 
 After compliance review passes:
 - Update the plan file: check the task's checkbox.
+- Update the SQL tracking state:
+  ```sql
+  UPDATE todos SET status = 'done', updated_at = datetime('now') WHERE id = 'task-N-...';
+  ```
+- Report progress:
+  ```sql
+  SELECT status, count(*) as cnt FROM todos GROUP BY status;
+  ```
 - Move to the next task.
+
+If a task is blocked (failing after 3 iterations):
+```sql
+UPDATE todos SET status = 'blocked', updated_at = datetime('now') WHERE id = 'task-N-...';
+```
 
 ### 7. Completion
 
