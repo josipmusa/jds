@@ -1,26 +1,26 @@
 # Testing Anti-Patterns
 
-**Load this reference when:** writing or changing tests, adding mocks, or tempted to add test-only methods to production code.
+**When to consult this guide:** any time you write new tests, modify existing test logic, introduce mock objects, or consider adding a method to production code that only tests would call.
 
 ## Overview
 
-Tests must verify real behavior, not mock behavior. Mocks are a means to isolate, not the thing being tested.
+A test that only exercises your fakes is a test that proves nothing about your system. Mocks exist to stand in for expensive or external dependencies — they should never be the subject under test. Every assertion should trace back to an observable outcome of real production logic.
 
-**Core principle:** Test what the code does, not what the mocks do.
+**Guiding principle:** Assert against real outcomes, not against mock choreography.
 
-**Following strict TDD prevents these anti-patterns.**
+**Disciplined TDD naturally guards against every pitfall listed below.**
 
-## The Iron Laws
+## Non-Negotiable Rules
 
-```
-1. NEVER test mock behavior
-2. NEVER add test-only methods to production classes
-3. NEVER mock without understanding dependencies
-```
+These three rules are absolute. Violating any of them means the test is providing false confidence.
 
-## Anti-Pattern 1: Testing Mock Behavior
+1. **Assertions belong on real outcomes.** If the only thing you can verify is that a fake was invoked, the test has no value.
+2. **Production code serves production callers.** Any method that exists solely for test convenience does not belong in a production class.
+3. **Understand before you isolate.** Introducing a mock without knowing how the real dependency behaves leads to tests that lie.
 
-**The violation:**
+## Pitfall 1: Asserting on Mock Choreography
+
+**What goes wrong:**
 ```java
 // BAD: Testing that the mock exists, not real behavior
 @Test
@@ -36,12 +36,12 @@ void When_OrderIsPlaced_Expect_InventoryUpdated() {
 }
 ```
 
-**Why this is wrong:**
-- You are verifying the mock was called, not that real inventory logic works
-- Test passes when mock is configured correctly, tells you nothing about real behavior
-- If the real `InventoryService.reserve()` has validation or side effects, this test misses them entirely
+**The problem:**
+- The only assertion is that the fake received a call — nothing about real inventory logic is exercised
+- A correctly configured mock will always make this test green, regardless of whether `InventoryService.reserve()` actually works
+- Validation rules, persistence side effects, and error paths in the real implementation are completely invisible here
 
-**The fix:**
+**The correction:**
 ```java
 // GOOD: Test with real InventoryService or test its behavior separately
 @Test
@@ -56,23 +56,21 @@ void When_OrderIsPlaced_Expect_InventoryUpdated() {
 }
 ```
 
-### Gate Function
+### Before You Proceed
 
-```
-BEFORE asserting on any mock interaction (verify, times, etc.):
-  Ask: "Am I testing real behavior or just that a mock was called?"
+Use this checklist before writing any `verify()` or mock-interaction assertion:
 
-  IF testing mock interaction:
-    STOP - Test the actual effect instead, or integration-test the real components
+- [ ] Does this assertion check a real, observable side effect (database state, returned value, emitted event)?
+- [ ] If I replaced the mock with the real dependency, would this assertion still make sense?
+- [ ] Can I describe what production behavior this assertion proves?
 
-  Test real behavior instead
-```
+**If any answer is no:** remove the mock assertion and test the actual outcome instead — either directly or through an integration test.
 
-## Anti-Pattern 2: Test-Only Methods in Production
+## Pitfall 2: Polluting Production with Test Helpers
 
-**The violation:**
+**What goes wrong:**
 ```java
-// BAD: resetState() only used in tests
+// BAD: clearAll() exists purely for test teardown
 public class ConnectionPool {
     private final List<Connection> connections = new ArrayList<>();
 
@@ -80,7 +78,7 @@ public class ConnectionPool {
     public void release(Connection conn) { /* ... */ }
 
     // This method exists ONLY for tests
-    public void resetState() {
+    public void clearAll() {
         connections.forEach(Connection::close);
         connections.clear();
     }
@@ -89,20 +87,20 @@ public class ConnectionPool {
 // In tests
 @AfterEach
 void tearDown() {
-    connectionPool.resetState();
+    connectionPool.clearAll();
 }
 ```
 
-**Why this is wrong:**
-- Production class polluted with test-only code
-- Dangerous if accidentally called in production (wipes all connections)
-- Violates separation of concerns
-- Future developers may think `resetState()` is part of the public API
+**The problem:**
+- The production class now carries dead weight that only test code exercises
+- If someone calls `resetState()` in a production path, every active connection is silently destroyed
+- New team members have no way to know this method is test-only — it looks like a legitimate part of the API
+- It blurs the boundary between what the class does for its callers and what tests need for setup/teardown
 
-**The fix:**
+**The correction:**
 ```java
-// GOOD: Test utilities handle test cleanup
-// ConnectionPool has NO resetState() — it does not own its own teardown
+// GOOD: Dedicated test helper owns cleanup logic
+// ConnectionPool has NO clearAll() — cleanup is not its responsibility
 
 // In test-support/
 public final class TestConnectionPool {
@@ -121,25 +119,19 @@ void setUp() {
 }
 ```
 
-### Gate Function
+### Before You Proceed
 
-```
-BEFORE adding any method to a production class:
-  Ask: "Is this only used by tests?"
+Run through these questions before adding any new method to a production class:
 
-  IF yes:
-    STOP - Don't add it
-    Put it in test utilities or use a fresh instance per test
+- [ ] Will any production caller ever invoke this method?
+- [ ] If I delete this method, does any non-test code break?
+- [ ] Is there a test utility class or a fresh-instance approach that eliminates the need for this method?
 
-  Ask: "Does this class own this resource's lifecycle?"
+**If only tests need it:** extract it into a test helper or restructure tests to use a fresh instance per case. Keep production classes clean.
 
-  IF no:
-    STOP - Wrong class for this method
-```
+## Pitfall 3: Mocking Dependencies You Don't Understand
 
-## Anti-Pattern 3: Mocking Without Understanding
-
-**The violation:**
+**What goes wrong:**
 ```java
 // BAD: Mock prevents the side effect the test depends on
 @Test
@@ -157,13 +149,13 @@ void When_DuplicateUserRegistered_Expect_ConflictThrown() {
 }
 ```
 
-**Why this is wrong:**
-- The mocked `save()` returns a User but never persists it
-- The duplicate check (`findByEmail`) is also mocked or returns nothing
-- Test passes for the wrong reason or fails mysteriously
-- Over-mocking "to be safe" breaks the behavior the test needs
+**The problem:**
+- `save()` returns an object but has no persistence — the state the duplicate check relies on never materialises
+- `findByEmail` either returns nothing or is also mocked to return nothing, so the duplicate path is unreachable
+- The test either passes for the wrong reason or fails in a way that sends you chasing phantom bugs
+- Blanket mocking "just in case" actively sabotages the behaviour the test is supposed to verify
 
-**The fix:**
+**The correction:**
 ```java
 // GOOD: Use an in-memory repository that preserves real behavior
 @Test
@@ -178,47 +170,38 @@ void When_DuplicateUserRegistered_Expect_ConflictThrown() {
 }
 ```
 
-### Gate Function
+### Before You Proceed
 
-```
-BEFORE mocking any method:
-  STOP - Don't mock yet
+Before introducing any mock, work through this decision sequence:
 
-  1. Ask: "What side effects does the real method have?"
-  2. Ask: "Does this test depend on any of those side effects?"
-  3. Ask: "Do I fully understand what this test needs?"
+- [ ] Can I list every side effect the real method produces (writes, state changes, events)?
+- [ ] Does my test depend on any of those side effects to reach its assertion?
+- [ ] Do I understand the full call chain well enough to know what is safe to fake?
 
-  IF depends on side effects:
-    Mock at lower level (the actual slow/external operation)
-    OR use in-memory implementations that preserve necessary behavior
-    NOT the high-level method the test depends on
+**If the test relies on a side effect:** do not mock the method that produces it. Instead, mock only the slow or external operation underneath it, or use an in-memory implementation that retains the necessary behaviour.
 
-  IF unsure what test depends on:
-    Run test with real implementation FIRST
-    Observe what actually needs to happen
-    THEN add minimal mocking at the right level
-```
+**If you're unsure what the test needs:** run it against the real implementation first, observe what must happen, then introduce the minimal mock at the right layer.
 
-## Anti-Pattern 4: Incomplete Mocks
+## Pitfall 4: Half-Built Fake Responses
 
-**The violation:**
+**What goes wrong:**
 ```java
-// BAD: Partial mock — only fields you think you need
+// BAD: Incomplete mock — populates only the fields you anticipate
 PaymentResponse mockResponse = new PaymentResponse();
 mockResponse.setStatus("SUCCESS");
 mockResponse.setTransactionId("txn-123");
-// Missing: metadata that downstream audit logging uses
+// Omitted: metadata object that the audit trail reads downstream
 
 // Later: NullPointerException when audit logger accesses response.getMetadata().getTimestamp()
 ```
 
-**Why this is wrong:**
-- Partial mocks hide structural assumptions — you only mocked fields you knew about
-- Downstream code may depend on fields you didn't include — silent `NullPointerException`
-- Tests pass but integration fails — mock is incomplete, real API is complete
-- False confidence — test proves nothing about real behavior
+**The problem:**
+- You populated the fields you knew about and left the rest null — a structural assumption baked into the test
+- Code further down the call chain may read fields you never set, producing `NullPointerException`s that only appear at integration time
+- The test gives a green bar while the real API response would exercise a completely different code path
+- This creates a dangerous gap between what tests prove and what production actually does
 
-**The fix:**
+**The correction:**
 ```java
 // GOOD: Mirror real API response completely
 PaymentResponse mockResponse = new PaymentResponse();
@@ -228,52 +211,48 @@ mockResponse.setMetadata(new PaymentMetadata("req-789", Instant.now()));
 // All fields the real payment gateway returns
 ```
 
-### Gate Function
+### Before You Proceed
 
+When constructing any fake response object, verify the following:
+
+- [ ] Have I consulted the real API documentation or captured a sample response?
+- [ ] Does my fake include every field that any downstream consumer might access?
+- [ ] Does the shape of my fake match the real response schema field-for-field?
+
+**When in doubt:** include all documented fields. A slightly verbose fake is far safer than a sparse one that hides missing data behind null.
+
+## Pitfall 5: Writing Tests After the Fact
+
+**What goes wrong:**
 ```
-BEFORE creating mock responses:
-  Check: "What fields does the real API response contain?"
-
-  Actions:
-    1. Examine actual API response from docs/examples
-    2. Include ALL fields system might consume downstream
-    3. Verify mock matches real response schema completely
-
-  If uncertain: Include all documented fields
-```
-
-## Anti-Pattern 5: Tests as Afterthought
-
-**The violation:**
-```
-Implementation complete
-No tests written
-"Ready for testing"
+Feature coded
+Zero tests exist
+"I'll add tests now"
 ```
 
-**Why this is wrong:**
-- Testing is part of implementation, not an optional follow-up
-- TDD would have caught this — the test comes first
-- Cannot claim complete without tests
+**The problem:**
+- Tests are not a separate phase — they are an integral part of building the feature
+- With TDD, this situation is impossible: you cannot write production code without a failing test prompting it
+- Declaring "done" without tests means the feature is unverified and the definition of complete has not been met
 
-**The fix:**
+**The correction:**
 ```
 TDD cycle:
-1. Write failing test     (mvn test — FAIL)
-2. Implement to pass      (mvn test — PASS)
-3. Refactor
-4. THEN claim complete
+1. Start with a failing test   (mvn test — RED)
+2. Write just enough to pass   (mvn test — GREEN)
+3. Clean up the code
+4. THEN mark the task done
 ```
 
-## When Mocks Become Too Complex
+## Recognising Over-Complicated Mocks
 
-**Warning signs:**
-- Mock setup longer than test logic
-- Mocking everything to make test pass
-- Mocks missing methods real components have
-- Test breaks when mock changes
+**Symptoms that your mock setup has outgrown its usefulness:**
+- The arrangement section dwarfs the actual act-and-assert logic
+- You are mocking nearly every collaborator just to get the test to compile
+- Your fakes lack methods or fields that the real components expose
+- Changing the mock wiring breaks the test even though production logic hasn't changed
 
-**Consider:** Integration tests with real components (in-memory databases, embedded servers) are often simpler and more reliable than complex mock chains.
+**A practical alternative:** integration tests backed by lightweight real components — in-memory databases, embedded servers, or test containers — are frequently simpler to write and far more trustworthy than elaborate mock graphs.
 
 ```java
 // Instead of 20 lines of Mockito setup:
@@ -291,32 +270,32 @@ void When_UserSearchesByName_Expect_MatchingResults() {
 }
 ```
 
-## TDD Prevents These Anti-Patterns
+## How TDD Guards Against These Pitfalls
 
-**Why TDD helps:**
-1. **Write test first** — Forces you to think about what you are actually testing
-2. **Watch it fail** — Confirms test tests real behavior, not mocks
-3. **Minimal implementation** — No test-only methods creep in
-4. **Real dependencies** — You see what the test actually needs before mocking
+**The red-green-refactor cycle addresses each issue directly:**
+1. **Start from a failing test** — You must articulate the expected outcome before writing any production code, which forces clarity about what you are actually verifying.
+2. **Observe the failure** — Watching the test go red against real logic confirms your assertion targets genuine behaviour, not mock wiring.
+3. **Implement only what the test demands** — There is no room for test-only convenience methods when every line of production code exists to turn a specific test green.
+4. **Encounter real dependencies early** — Because you run against actual collaborators first, you discover what truly needs isolation before reaching for a mock.
 
-**If you are testing mock behavior, you violated TDD** — you added mocks without watching the test fail against real code first.
+**Bottom line:** if your test only proves that a mock was called correctly, you skipped the "watch it fail" step — mocks were introduced before the test ever ran against real code.
 
 ## Quick Reference
 
-| Anti-Pattern | Fix |
-|--------------|-----|
-| Verify mock interactions | Test the real effect instead |
-| Test-only methods in production | Move to test utilities or use fresh instances |
-| Mock without understanding | Understand dependencies first, mock minimally |
-| Incomplete mocks | Mirror real API completely |
-| Tests as afterthought | TDD — tests first |
-| Over-complex mocks | Consider integration tests with in-memory implementations |
+| Pitfall | Remedy |
+|---------|--------|
+| Asserting on mock calls | Verify the actual observable effect in real state |
+| Production methods that only tests invoke | Extract to test utilities or instantiate fresh per test |
+| Mocking unfamiliar dependencies | Map the dependency's side effects first; isolate only at the lowest necessary layer |
+| Half-built fake responses | Replicate the full response schema from API docs or samples |
+| Tests written after implementation | Follow the TDD cycle — every feature starts with a failing test |
+| Overly elaborate mock setups | Switch to integration tests with in-memory or embedded real components |
 
-## Red Flags
+## Smell Indicators
 
-- Excessive `verify()` calls checking mock interactions
-- Methods only called from test files
-- Mock setup is >50% of test code
-- Test fails when you remove a mock
-- Cannot explain why a mock is needed
-- Mocking "just to be safe"
+- Heavy use of `verify()` to confirm mock call sequences rather than real outcomes
+- Production methods whose only callers live in test files
+- Mock configuration occupying more than half the test method
+- Removing a mock causes the test to fail even though no production logic changed
+- Unable to articulate what specific production behaviour a mock is standing in for
+- Defaulting to mocks as a precaution rather than a deliberate isolation choice
