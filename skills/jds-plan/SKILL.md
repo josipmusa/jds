@@ -82,16 +82,14 @@ SELECT id, title, status FROM todos ORDER BY created_at;
 
 ### The No-Placeholders Rule
 
-These are plan failures — if you catch yourself writing any of these, the task is incomplete:
+A task is only complete when a subagent can execute it without guessing. These patterns indicate an incomplete task — find and eliminate every instance:
 
-- "TBD" or "TODO"
-- "Add appropriate error handling"
-- "Add validation"
-- "Handle edge cases"
-- "Similar to task N"
-- Any step that describes what to do without showing the actual code
+- Deferred decisions: "TBD", "TODO", or "decide later"
+- Handwaved logic: "add error handling", "validate inputs", "cover the edge cases"
+- Forward references: "like task N" or "same pattern as above" — each task must stand alone
+- Intent without implementation: describing *what* to do instead of showing *how*
 
-Every task must contain the actual content needed to execute it. A subagent reading the task should be able to implement it without inferring intent.
+If a task can't be executed from its text alone, it isn't done yet.
 
 ### Plan Document Format
 
@@ -132,14 +130,14 @@ Save to `docs/jds/plans/YYYY-MM-DD-<feature-name>.md`. Do NOT commit this file.
 
 ### Step 4: Plan Self-Review
 
-After writing the plan, review it inline. No subagent dispatch needed. Check:
+Review the plan inline before handing off. No subagent needed. Four checks:
 
-1. **Spec coverage:** Skim each requirement in the spec. Can you point to a task that implements it? List any gaps and add missing tasks.
-2. **Placeholder scan:** Search for any of the failure patterns listed above. Fix every one.
-3. **Type consistency:** Do method names, signatures, and property names match across tasks? A function called one thing in task 3 and something different in task 7 is a bug in the plan.
-4. **Verification commands:** Does every task have one? Are they specific enough to actually confirm the task worked?
+1. **Requirement traceability:** Go through the spec section by section. Every requirement should map to at least one task. Add tasks for anything that fell through the cracks.
+2. **Completeness scan:** Find every instance of the placeholder patterns above. A plan with even one deferred decision or handwaved step is not ready to execute.
+3. **Symbol consistency:** Pick any identifier defined in an early task — method name, type, property. Does every later task that references it use the exact same name? Drift here causes integration failures.
+4. **Verifiability:** Every task needs a command that concretely confirms it worked. "Run the test" is not sufficient — specify the exact command and what its output should say.
 
-Fix all issues inline before proceeding.
+Fix inline. Move on.
 
 ### Step 5: Human Review
 

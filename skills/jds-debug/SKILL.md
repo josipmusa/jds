@@ -111,11 +111,11 @@ This is not defensive programming for its own sake — it is targeted hardening 
 
 ## Common Mistakes
 
-| Mistake | Why It Matters |
-|---------|---------------|
-| Jumping to fix without investigating | You fix the symptom, not the cause |
-| Reading only the first line of an error | Root cause is often in the middle of the stack trace |
-| Forming a hypothesis without evidence | Confirmation bias makes you see evidence that isn't there |
-| Fixing without a reproducing test | No proof the fix addresses the actual bug |
-| Stopping after one instance | Same assumption likely exists elsewhere |
-| More than 3 fix attempts | The problem is probably structural — escalate |
+| Mistake | Consequence |
+|---------|------------|
+| Fixing before investigating | The bug resurfaces under different conditions because the root cause was never touched |
+| Stopping at the first line of the error | Stack traces bury the real failure point — truncating the read buries the diagnosis |
+| Hypothesizing without evidence first | You'll selectively interpret later observations to fit the theory you already formed |
+| No reproducing test before the fix | The fix is unverified; the same class of bug will reappear without a regression guard |
+| Fixing only the instance that surfaced | If a wrong assumption caused this bug, the same assumption is likely elsewhere in the codebase |
+| A fourth fix attempt after three have failed | Three failures signal an architectural constraint — continued patching burns time and adds noise |

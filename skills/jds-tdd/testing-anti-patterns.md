@@ -1,24 +1,18 @@
 # Testing Anti-Patterns
 
-**When to consult this guide:** any time you write new tests, modify existing test logic, introduce mock objects, or consider adding a method to production code that only tests would call.
+**When to consult this guide:** before introducing any mock, before adding a method to a production class, or when a test starts to feel harder to write than the feature itself.
 
-## Overview
+## Purpose
 
-A test that only exercises your fakes is a test that proves nothing about your system. Mocks exist to stand in for expensive or external dependencies — they should never be the subject under test. Every assertion should trace back to an observable outcome of real production logic.
+Mocks are surgical tools. Used precisely, they isolate the one moving part you're testing. Used carelessly, they replace the system under test with a fake you then verify — which proves the fake works, not the system.
 
-**Guiding principle:** Assert against real outcomes, not against mock choreography.
+**Three rules that cannot be bent:**
 
-**Disciplined TDD naturally guards against every pitfall listed below.**
+1. Every assertion must be traceable to observable behavior in real code.
+2. Production classes must not carry methods that only test harnesses invoke.
+3. A mock you don't fully understand is a liability — map the dependency before isolating it.
 
-## Non-Negotiable Rules
-
-These three rules are absolute. Violating any of them means the test is providing false confidence.
-
-1. **Assertions belong on real outcomes.** If the only thing you can verify is that a fake was invoked, the test has no value.
-2. **Production code serves production callers.** Any method that exists solely for test convenience does not belong in a production class.
-3. **Understand before you isolate.** Introducing a mock without knowing how the real dependency behaves leads to tests that lie.
-
-## Pitfall 1: Asserting on Mock Choreography
+## Problem 1: Asserting on Mock Choreography
 
 **What goes wrong:**
 ```java
@@ -56,7 +50,7 @@ void When_OrderIsPlaced_Expect_InventoryUpdated() {
 }
 ```
 
-### Before You Proceed
+### Decision Gate
 
 Use this checklist before writing any `verify()` or mock-interaction assertion:
 
@@ -66,7 +60,7 @@ Use this checklist before writing any `verify()` or mock-interaction assertion:
 
 **If any answer is no:** remove the mock assertion and test the actual outcome instead — either directly or through an integration test.
 
-## Pitfall 2: Polluting Production with Test Helpers
+## Problem 2: Polluting Production with Test Helpers
 
 **What goes wrong:**
 ```java
@@ -119,7 +113,7 @@ void setUp() {
 }
 ```
 
-### Before You Proceed
+### Decision Gate
 
 Run through these questions before adding any new method to a production class:
 
@@ -129,7 +123,7 @@ Run through these questions before adding any new method to a production class:
 
 **If only tests need it:** extract it into a test helper or restructure tests to use a fresh instance per case. Keep production classes clean.
 
-## Pitfall 3: Mocking Dependencies You Don't Understand
+## Problem 3: Mocking Dependencies You Don't Understand
 
 **What goes wrong:**
 ```java
@@ -170,7 +164,7 @@ void When_DuplicateUserRegistered_Expect_ConflictThrown() {
 }
 ```
 
-### Before You Proceed
+### Decision Gate
 
 Before introducing any mock, work through this decision sequence:
 
@@ -182,7 +176,7 @@ Before introducing any mock, work through this decision sequence:
 
 **If you're unsure what the test needs:** run it against the real implementation first, observe what must happen, then introduce the minimal mock at the right layer.
 
-## Pitfall 4: Half-Built Fake Responses
+## Problem 4: Half-Built Fake Responses
 
 **What goes wrong:**
 ```java
@@ -211,7 +205,7 @@ mockResponse.setMetadata(new PaymentMetadata("req-789", Instant.now()));
 // All fields the real payment gateway returns
 ```
 
-### Before You Proceed
+### Decision Gate
 
 When constructing any fake response object, verify the following:
 
@@ -221,7 +215,7 @@ When constructing any fake response object, verify the following:
 
 **When in doubt:** include all documented fields. A slightly verbose fake is far safer than a sparse one that hides missing data behind null.
 
-## Pitfall 5: Writing Tests After the Fact
+## Problem 5: Writing Tests After the Fact
 
 **What goes wrong:**
 ```
@@ -244,58 +238,56 @@ TDD cycle:
 4. THEN mark the task done
 ```
 
-## Recognising Over-Complicated Mocks
+## When the Mock Setup Outgrows the Test
 
-**Symptoms that your mock setup has outgrown its usefulness:**
-- The arrangement section dwarfs the actual act-and-assert logic
-- You are mocking nearly every collaborator just to get the test to compile
-- Your fakes lack methods or fields that the real components expose
-- Changing the mock wiring breaks the test even though production logic hasn't changed
+Warning signs that you've reached diminishing returns:
+- The `when()` / `thenReturn()` setup takes more lines than the assertion
+- You're mocking collaborators you haven't examined in the actual code
+- Changing the mock's behavior breaks the test but no production behavior changed
+- You can't describe in one sentence what production path this test exercises
 
-**A practical alternative:** integration tests backed by lightweight real components — in-memory databases, embedded servers, or test containers — are frequently simpler to write and far more trustworthy than elaborate mock graphs.
+At this point, an integration test against an in-memory implementation is nearly always simpler and more trustworthy than continuing to extend the mock graph.
 
 ```java
-// Instead of 20 lines of Mockito setup:
+// Instead of layering stubs on stubs, use a real in-memory store:
 @Test
-void When_UserSearchesByName_Expect_MatchingResults() {
-    // Use an in-memory H2 database — no mocking needed
-    UserRepository repo = new JpaUserRepository(testEntityManager);
-    repo.save(new User("alice@example.com", "Alice"));
-    repo.save(new User("bob@example.com", "Bob"));
+void When_UserSearchesByPartialName_Expect_MatchingResultsReturned() {
+    UserRepository repo = new InMemoryUserRepository();
+    repo.save(new User("alice@example.com", "Alice Liddell"));
+    repo.save(new User("bob@example.com", "Bob Marley"));
 
-    List<User> results = repo.findByNameContaining("Ali");
+    List<User> matches = repo.findByNameContaining("Ali");
 
-    assertEquals(1, results.size());
-    assertEquals("Alice", results.get(0).getName());
+    assertEquals(1, matches.size());
+    assertEquals("Alice Liddell", matches.get(0).getName());
 }
 ```
 
-## How TDD Guards Against These Pitfalls
+## How Following TDD Prevents These Problems
 
-**The red-green-refactor cycle addresses each issue directly:**
-1. **Start from a failing test** — You must articulate the expected outcome before writing any production code, which forces clarity about what you are actually verifying.
-2. **Observe the failure** — Watching the test go red against real logic confirms your assertion targets genuine behaviour, not mock wiring.
-3. **Implement only what the test demands** — There is no room for test-only convenience methods when every line of production code exists to turn a specific test green.
-4. **Encounter real dependencies early** — Because you run against actual collaborators first, you discover what truly needs isolation before reaching for a mock.
+The RED step is the safeguard:
+1. Writing the assertion before any implementation forces you to specify *what* you're proving before you set up how to prove it.
+2. Watching the test fail against real code — before introducing any mock — shows you which dependencies actually matter.
+3. Implementing the minimum to turn it green leaves no room for convenience methods that only tests would call.
+4. If mocking is introduced during refactoring rather than from the start, you already know what the real system does and can isolate safely.
 
-**Bottom line:** if your test only proves that a mock was called correctly, you skipped the "watch it fail" step — mocks were introduced before the test ever ran against real code.
+**The sign that you skipped RED:** your test only ever asserted on mock interactions, never on a real outcome.
 
 ## Quick Reference
 
-| Pitfall | Remedy |
+| Problem | Remedy |
 |---------|--------|
-| Asserting on mock calls | Verify the actual observable effect in real state |
-| Production methods that only tests invoke | Extract to test utilities or instantiate fresh per test |
-| Mocking unfamiliar dependencies | Map the dependency's side effects first; isolate only at the lowest necessary layer |
-| Half-built fake responses | Replicate the full response schema from API docs or samples |
-| Tests written after implementation | Follow the TDD cycle — every feature starts with a failing test |
-| Overly elaborate mock setups | Switch to integration tests with in-memory or embedded real components |
+| Asserting on mock invocations | Replace with an assertion on the real state change |
+| Production method only called from tests | Move logic to a test utility class |
+| Mock set up before understanding the dependency | Read the real implementation first; isolate only what is slow or external |
+| Fake response missing fields | Build the full response from API docs or a captured sample |
+| Tests added after implementation | Delete the code; begin the TDD cycle from a failing test |
+| Mock setup dominates the test | Switch to an in-memory real implementation |
 
-## Smell Indicators
+## Warning Signs
 
-- Heavy use of `verify()` to confirm mock call sequences rather than real outcomes
-- Production methods whose only callers live in test files
-- Mock configuration occupying more than half the test method
-- Removing a mock causes the test to fail even though no production logic changed
-- Unable to articulate what specific production behaviour a mock is standing in for
-- Defaulting to mocks as a precaution rather than a deliberate isolation choice
+- Test IDs contain `mock`, `fake`, or `stub` in their names
+- Methods appear in production classes with no non-test callers
+- Mock configuration exceeds the assertion logic in length
+- Removing the mock makes the test fail even though no production logic changed
+- You cannot name the specific production behavior this test is designed to catch
