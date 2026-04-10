@@ -48,7 +48,7 @@ Before starting the task loop, query the tracking state to determine where to be
 SELECT id, title, status FROM todos WHERE status != 'done' ORDER BY created_at;
 ```
 
-If resuming after an interruption, this query identifies which tasks remain. Skip any tasks already marked `done` — do not re-execute completed work.
+Skip any tasks already marked `done` — do not re-execute completed work.
 
 Print the dependency order before starting the loop:
 

@@ -31,7 +31,7 @@ Now — and only now — clean up the implementation while keeping all tests gre
 
 ## Phase Tracking
 
-Track each TDD phase in the SQL tracking system to enable interruption recovery mid-cycle:
+Track each TDD phase in the SQL tracking system for progress visibility:
 
 **Before RED:**
 ```sql
