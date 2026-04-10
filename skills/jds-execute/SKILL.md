@@ -51,6 +51,27 @@ SELECT id, title, status FROM todos WHERE status != 'done' ORDER BY created_at;
 
 If resuming after an interruption, this query identifies which tasks remain. Skip any tasks already marked `done` — do not re-execute completed work.
 
+Print the dependency order before starting the loop:
+
+```sql
+SELECT t.id, t.title, GROUP_CONCAT(td.depends_on, ', ') as depends_on
+FROM todos t
+LEFT JOIN todo_deps td ON td.todo_id = t.id
+GROUP BY t.id
+ORDER BY t.created_at;
+```
+
+Render it as a plain list so the execution order is visible at a glance:
+
+```
+Execution order:
+  [1] task-1-create-validator       (independent)
+  [2] task-2-write-tests            (depends on 1)
+  [3] task-3-add-handler            (depends on 1)
+  [4] task-4-integration-test       (depends on 2, 3)
+  [5] task-5-update-readme          (independent)
+```
+
 Between tasks, report progress:
 
 ```sql
