@@ -44,7 +44,9 @@ Every task passes through this pipeline. Simple tasks get a lightweight pass. Co
 | **jds-think** | Flexible | The design gate. Explores codebase, asks clarifying questions, proposes approaches, writes specs. |
 | **jds-plan** | Flexible | Translates specs into atomic tasks (2-5 min each). No placeholders, no hand-waving. |
 | **jds-execute** | Flexible | Runs tasks via isolated subagents. Each gets only what it needs — never session history. |
+| **jds-parallel** | Flexible | Wave-based parallel dispatch for independent tasks. Handles conflict detection and sequential fallback. |
 | **jds-tdd** | Rigid | Enforces RED-GREEN-REFACTOR. Tests first, always. Code written before tests? Delete it. |
+| **jds-refactor** | Rigid | Safe structural changes with behavioral equivalence verification. Tests must pass before and after. |
 | **jds-debug** | Rigid | 4-phase root-cause analysis: Investigate → Analyze → Hypothesize → Fix. No symptom-patching. |
 | **jds-verify** | Rigid | Requires actual command output as evidence. "I believe this works" is not verification. |
 | **jds-finish** | Rigid | Cleans up specs, plans, and tracking state. Does not commit — that's your job. |
