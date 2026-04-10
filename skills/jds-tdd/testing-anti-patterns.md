@@ -1,3 +1,5 @@
+[//]: # (Adapted from obra/superpowers: https://github.com/obra/superpowers/blob/main/skills/test-driven-development/testing-anti-patterns.md)
+
 # Testing Anti-Patterns
 
 **When to consult this guide:** before introducing any mock, before adding a method to a production class, or when a test starts to feel harder to write than the feature itself.
