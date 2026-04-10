@@ -17,18 +17,7 @@ Only run the full test suite if jds-verify has NOT already done so in this sessi
 
 If tests fail at any point: **stop.** Do not proceed. Route to jds-debug + jds-verify.
 
-### Step 2: Update Existing Documentation
-
-Check whether any existing documentation needs updating based on what the plan changed.
-
-1. **Identify touched areas.** From the plan file or SQL task descriptions, list the source files, modules, classes, endpoints, or features that were modified.
-2. **Scan for existing docs.** Look for markdown files (README, `docs/`) that reference those areas — by name, path, or concept.
-3. **Patch what changed.** Update stale method signatures, parameter lists, endpoint paths, descriptions, or examples. Do not rewrite sections that are still accurate. Do not create new documentation.
-4. **If nothing references the changed areas,** skip silently.
-
-The final report (Step 6) notes whether docs were updated or no changes were needed.
-
-### Step 3: Clean Up JDS Artifacts
+### Step 2: Clean Up JDS Artifacts
 
 Delete JDS working artifacts unconditionally:
 
@@ -37,6 +26,19 @@ Delete JDS working artifacts unconditionally:
 3. Delete the `docs/jds/` directory if it is now empty (including parent `docs/` if also empty and was created by JDS).
 
 These are AI working artifacts. They served their purpose during implementation and should not persist.
+
+**This step runs before documentation update intentionally** — `docs/jds/` must be gone before Step 3 scans for project docs, so it cannot be touched by mistake.
+
+### Step 3: Update Existing Documentation
+
+Check whether any existing documentation needs updating based on what the plan changed.
+
+1. **Identify touched areas.** From the plan file or SQL task descriptions, list the source files, modules, classes, endpoints, or features that were modified.
+2. **Scan for existing docs.** Look for markdown files (README, `docs/`) that reference those areas — by name, path, or concept. `docs/jds/` has already been deleted and must not appear here.
+3. **Patch what changed.** Update stale method signatures, parameter lists, endpoint paths, descriptions, or examples. Do not rewrite sections that are still accurate. Do not create new documentation.
+4. **If nothing references the changed areas,** skip silently.
+
+The final report (Step 6) notes whether docs were updated or no changes were needed.
 
 ### Step 4: Clean Up Tracking State
 
