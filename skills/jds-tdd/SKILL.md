@@ -94,13 +94,13 @@ This convention is non-negotiable. It applies to every test written under the JD
 
 ## Rationalization Blocker
 
-| Thought | Reality |
-|---------|---------|
-| "I'll write tests after — I just need to see if this approach works" | That is prototyping, not implementation. If you want to explore, use a scratch file. The real implementation starts with a test. |
-| "It's too simple to need a test" | Simple code that breaks in production is not simple. The test takes 30 seconds to write and prevents hours of debugging. |
-| "The test would just mirror the implementation" | Then the implementation is trivial and the test is fast to write. If the test truly mirrors the code, the code might be too tightly coupled to its implementation — consider testing behavior instead. |
-| "I already wrote the code and it works" | You wrote untested code. Delete it. Write the test. Watch it fail. Rewrite the code. This is not wasted effort — it is the process that produces reliable software. |
-| "This is just a configuration change" | Configuration changes break systems. Test the behavior the configuration enables. |
+| Thought | What to do instead |
+|---------|-------------------|
+| "I'll write tests after — I just need to see if this approach works" | Open a scratch file for exploration. When you've confirmed the concept, throw it away and start the real implementation from a failing test. |
+| "It's too simple to need a test" | Write the test anyway. If it takes 30 seconds to write and never catches anything, the cost is 30 seconds. If it ever catches a regression, those 30 seconds paid back in hours. |
+| "The test would just mirror the implementation" | A test that mirrors trivial implementation is trivial to write — write it. If writing the test feels redundant, that usually means the code is testing implementation details rather than observable behavior; test behavior instead. |
+| "I already wrote the code and it works" | Delete the code. Write a failing test first. Then rewrite it. The first version wasn't developed with TDD — it was a prototype. The second version is the implementation. |
+| "This is just a configuration change" | Configuration changes break observable behavior. Write a test for the behavior the configuration governs, not for the config value itself. |
 
 ## Testing Anti-Patterns
 
