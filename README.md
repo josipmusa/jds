@@ -92,14 +92,14 @@ Or, from within an interactive Copilot CLI session, use the slash command equiva
 
 ## Quick Start
 
-Once installed, JDS activates automatically at session start. The typical flow for any non-trivial task:
+Once installed, JDS activates automatically at session start - no need to invoke skills manually. The typical flow for any non-trivial task:
 
 ```
-/jds-think      → clarify requirements, write a spec
-/jds-plan       → break the spec into atomic tasks
-/jds-execute    → implement via isolated subagents (TDD enforced)
-/jds-verify     → confirm everything works with real output
-/jds-finish     → clean up working artifacts
+jds-think      → clarify requirements, write a spec
+jds-plan       → break the spec into atomic tasks
+jds-execute    → implement via isolated subagents (TDD enforced)
+jds-verify     → confirm everything works with real output
+jds-finish     → clean up working artifacts
 ```
 
 ## Key Principles
