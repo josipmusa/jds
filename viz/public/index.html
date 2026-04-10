@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JDS Task Graph</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, monospace; overflow: hidden; }
+  #graph { width: 100vw; height: 100vh; }
+  .node circle { stroke: #30363d; stroke-width: 1.5px; cursor: pointer; }
+  .node text { fill: #e6edf3; font-size: 11px; pointer-events: none; text-anchor: middle; }
+  .link { stroke: #30363d; stroke-width: 1.5px; marker-end: url(#arrow); }
+  #legend { position: fixed; bottom: 16px; left: 16px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 10px 14px; font-size: 12px; }
+  .legend-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  #status { position: fixed; top: 12px; right: 16px; font-size: 11px; color: #8b949e; }
+  #tooltip { position: fixed; background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px 12px; font-size: 12px; max-width: 260px; pointer-events: none; display: none; }
+</style>
+</head>
+<body>
+<svg id="graph"></svg>
+<div id="legend">
+  <div class="legend-row"><div class="legend-dot" style="background:#6e7681"></div>pending</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#d29922"></div>in_progress</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#238636"></div>done</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#da3633"></div>blocked</div>
+</div>
+<div id="status">connecting…</div>
+<div id="tooltip"></div>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+const STATUS_COLOR = { pending: '#6e7681', in_progress: '#d29922', done: '#238636', blocked: '#da3633' };
+const statusEl = document.getElementById('status');
+const tooltip = document.getElementById('tooltip');
+const svg = d3.select('#graph');
+let sim, nodes = [], links = [];
+
+function color(status) { return STATUS_COLOR[status] || '#6e7681'; }
+
+function render(data) {
+  nodes = data.nodes;
+  links = data.edges;
+  svg.selectAll('*').remove();
+
+  const w = window.innerWidth, h = window.innerHeight;
+  svg.attr('width', w).attr('height', h);
+
+  svg.append('defs').append('marker')
+    .attr('id', 'arrow').attr('viewBox', '0 -4 8 8')
+    .attr('refX', 20).attr('refY', 0)
+    .attr('markerWidth', 6).attr('markerHeight', 6)
+    .attr('orient', 'auto')
+    .append('path').attr('d', 'M0,-4L8,0L0,4').attr('fill', '#30363d');
+
+  const g = svg.append('g');
+  svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', e => g.attr('transform', e.transform)));
+
+  const link = g.append('g').selectAll('line').data(links).join('line').attr('class', 'link');
+
+  const node = g.append('g').selectAll('g').data(nodes).join('g')
+    .attr('class', 'node')
+    .call(d3.drag()
+      .on('start', (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on('end', (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }))
+    .on('mouseover', (e, d) => {
+      tooltip.style.display = 'block';
+      tooltip.textContent = d.title;
+    })
+    .on('mousemove', e => {
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top = (e.clientY - 8) + 'px';
+    })
+    .on('mouseout', () => { tooltip.style.display = 'none'; });
+
+  node.append('circle').attr('r', 16).attr('fill', d => color(d.status));
+  node.append('text').attr('dy', 28).text(d => d.id.replace(/^task-\d+-/, '').slice(0, 18));
+
+  sim = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(120))
+    .force('charge', d3.forceManyBody().strength(-300))
+    .force('center', d3.forceCenter(w / 2, h / 2))
+    .force('collision', d3.forceCollide(36))
+    .on('tick', () => {
+      link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+          .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+      node.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+}
+
+function connect() {
+  const ws = new WebSocket(`ws://${location.host}`);
+  ws.onopen = () => { statusEl.textContent = 'live'; };
+  ws.onmessage = e => { render(JSON.parse(e.data)); };
+  ws.onclose = () => { statusEl.textContent = 'reconnecting…'; setTimeout(connect, 2000); };
+  ws.onerror = () => ws.close();
+}
+
+window.addEventListener('resize', () => { if (nodes.length) render({ nodes, edges: links }); });
+connect();
+</script>
+</body>
+</html>

@@ -13,6 +13,25 @@ Works through an implementation plan task by task. Each task is executed by an i
 
 A confirmed plan file must exist under `docs/jds/plans/`. If it does not, invoke jds-plan first.
 
+## Visualization
+
+Before the task loop, start the viz server:
+
+```bash
+# Build once if dist/ doesn't exist yet
+[ -f viz/dist/server.js ] || (cd viz && npm install && npm run build)
+
+# Start (idempotent — returns immediately if already running)
+viz/start.sh
+```
+
+On success, `viz/start.sh` prints the URL line — relay it to the user:
+```
+Task visualization running at http://localhost:3847
+```
+
+If port 3847 is taken the server picks the next free one. The server is stopped automatically by the SessionEnd hook when the session ends.
+
 ## Model Selection
 
 Use the right model tier for each role. Match model capability to task complexity — don't use premium models for simple work.
