@@ -102,8 +102,6 @@ Once installed, JDS activates automatically at session start. The typical flow f
 /jds-finish     → clean up working artifacts
 ```
 
-For a simple task, `jds-think` + `jds-tdd` is enough. For a bug, go straight to `jds-debug`. The skills are designed to be composed — invoke what the situation needs.
-
 ## Key Principles
 
 ### Design Before Code
