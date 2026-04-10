@@ -36,7 +36,7 @@ Before any action — including clarifying questions, file reads, or "quick expl
 
 ## Instruction Priority
 
-The user is always the final authority. Their explicit directives — whether in CLAUDE.md, copilot-instructions.md, AGENTS.md, or spoken directly — supersede everything else. JDS skills sit one level below: they replace default system prompt behavior wherever the two conflict, but they never override the user. The default system prompt fills in whatever neither the user nor JDS addresses.
+The user is always the final authority. Their explicit directives — whether in their own config files (such as `copilot-instructions.md`, `CLAUDE.md`, or `AGENTS.md`) or spoken directly — supersede everything else. JDS skills sit one level below: they replace default system prompt behavior wherever the two conflict, but they never override the user. The default system prompt fills in whatever neither the user nor JDS addresses.
 
 **Example:** if a user's configuration file forbids TDD but jds-tdd demands it, the user's configuration wins. Skills govern process; the user governs policy.
 

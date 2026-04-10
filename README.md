@@ -90,6 +90,20 @@ Or, from within an interactive Copilot CLI session, use the slash command equiva
 /plugin install jds@jds-marketplace
 ```
 
+## Quick Start
+
+Once installed, JDS activates automatically at session start. The typical flow for any non-trivial task:
+
+```
+/jds-think      → clarify requirements, write a spec
+/jds-plan       → break the spec into atomic tasks
+/jds-execute    → implement via isolated subagents (TDD enforced)
+/jds-verify     → confirm everything works with real output
+/jds-finish     → clean up working artifacts
+```
+
+For a simple task, `jds-think` + `jds-tdd` is enough. For a bug, go straight to `jds-debug`. The skills are designed to be composed — invoke what the situation needs.
+
 ## Key Principles
 
 ### Design Before Code

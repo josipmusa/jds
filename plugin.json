@@ -5,6 +5,10 @@
   "author": {
     "name": "Josip Musa"
   },
+  "repository": "https://github.com/josipmusa/jds",
+  "homepage": "https://github.com/josipmusa/jds",
+  "license": "MIT",
+  "keywords": ["workflow", "tdd", "planning", "debugging", "subagents"],
   "agents": "./agents/",
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
