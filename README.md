@@ -40,7 +40,7 @@ Every task passes through this pipeline. Simple tasks get a lightweight pass. Co
 
 | Skill | Type | What It Does |
 |-------|------|-------------|
-| **jds-bootstrap** | Flexible | Session entry point. Enforces skill-check before any action. Detects incomplete work for resumption. |
+| **jds-bootstrap** | Flexible | Session entry point. Enforces skill-check before any action. |
 | **jds-think** | Flexible | The design gate. Explores codebase, asks clarifying questions, proposes approaches, writes specs. |
 | **jds-plan** | Flexible | Translates specs into atomic tasks (2-5 min each). No placeholders, no hand-waving. |
 | **jds-execute** | Flexible | Runs tasks via isolated subagents. Each gets only what it needs — never session history. |
@@ -116,9 +116,6 @@ Every task passes through `jds-think` before any code is written. A 2-minute des
 ### Context Isolation
 Subagents never inherit session history. Each task gets a focused, self-contained prompt with only what it needs. This prevents stale assumptions and forces verifiable outputs.
 
-### Interruption Recovery
-All task progress is tracked via SQL. If a session is interrupted, JDS detects incomplete work on the next session start and offers to resume from the last checkpoint.
-
 ### No Placeholders
 Plans contain complete code, not "add validation" or "handle edge cases." Every task must be executable by a subagent without inferring intent.
 
@@ -136,7 +133,7 @@ We recommend copying these instructions into your global Copilot instructions fi
 
 ## Acknowledgements
 
-JDS is an adaptation of the [superpowers](https://github.com/obra/superpowers) repository by [@obra](https://github.com/obra) (Jesse Vincent), used under the MIT License. The core philosophy — skill-based enforcement of software development discipline for AI agents — originates from that project. JDS adapts the concepts, restructures the skills for Copilot's plugin system, and adds Copilot-specific features like SQL-based task tracking for interruption recovery. See [ATTRIBUTION.md](ATTRIBUTION.md).
+JDS is an adaptation of the [superpowers](https://github.com/obra/superpowers) repository by [@obra](https://github.com/obra) (Jesse Vincent), used under the MIT License. The core philosophy — skill-based enforcement of software development discipline for AI agents — originates from that project. JDS adapts the concepts, restructures the skills for Copilot's plugin system, and adds Copilot-specific features like SQL-based task tracking. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
 ## License
 

@@ -51,7 +51,7 @@ If your hypothesis cannot be tested with observable evidence, it is not a hypoth
 
 ## Iteration Tracking
 
-Track each debug attempt in the SQL tracking system. This provides data for the 3-attempt escalation rule and enables resumption if debugging is interrupted.
+Track each debug attempt in the SQL tracking system. This provides data for the 3-attempt escalation rule.
 
 **At the start of each debug attempt:**
 ```sql

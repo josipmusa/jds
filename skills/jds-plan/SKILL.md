@@ -46,7 +46,7 @@ Each task must be 2-5 minutes of work. This granularity matters — it is what m
 
 ### Step 3: Track Tasks in SQL
 
-After writing the plan document, extract all tasks into the SQL tracking system. This enables interruption recovery and progress visibility throughout execution.
+After writing the plan document, extract all tasks into the SQL tracking system. This enables progress visibility throughout execution.
 
 For each task in the plan:
 
