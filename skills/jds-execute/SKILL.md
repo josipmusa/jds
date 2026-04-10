@@ -21,7 +21,6 @@ Use the right model tier for each role. Match model capability to task complexit
 |------|-------------|---------------|
 | **Implementer** | Sonnet (latest) | Opus (latest) |
 | **Spec Compliance Reviewer** | Sonnet (latest) | Sonnet (latest) |
-| **Code Quality Reviewer** | Sonnet (latest) | Opus (latest) |
 
 **Resolving "latest":** Always use the highest available version of each model tier. Check the platform's model list — pick the Sonnet with the highest version number for Sonnet tasks, the Opus with the highest version number for Opus tasks. Never use an older version when a newer one is available.
 
