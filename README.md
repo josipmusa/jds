@@ -122,7 +122,7 @@ We recommend copying these instructions into your global Copilot instructions fi
 
 ## Acknowledgements
 
-JDS is an adaptation of the [superpowers](https://github.com/obra/superpowers) repository by [@obra](https://github.com/obra), tailored specifically for GitHub Copilot CLI. The core philosophy — skill-based enforcement of software development discipline for AI agents — originates from that project. JDS adapts the concepts, restructures the skills for Copilot's plugin system, and adds Copilot-specific features like SQL-based task tracking for interruption recovery.
+JDS is an adaptation of the [superpowers](https://github.com/obra/superpowers) repository by [@obra](https://github.com/obra) (Jesse Vincent), used under the MIT License. The core philosophy — skill-based enforcement of software development discipline for AI agents — originates from that project. JDS adapts the concepts, restructures the skills for Copilot's plugin system, and adds Copilot-specific features like SQL-based task tracking for interruption recovery. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
 ## License
 
