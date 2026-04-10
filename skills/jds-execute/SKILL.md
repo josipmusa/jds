@@ -15,17 +15,28 @@ A confirmed plan file must exist under `docs/jds/plans/`. If it does not, invoke
 
 ## Visualization
 
-Before the task loop, start the viz server:
+Before the task loop, start the viz server. All paths are inside the JDS plugin,
+not the user's project — derive the plugin root from this skill's base directory
+(shown in the header above when the skill loaded):
 
-```bash
-# Build once if dist/ doesn't exist yet
-[ -f viz/dist/server.js ] || (cd viz && npm install && npm run build)
-
-# Start (idempotent — returns immediately if already running)
-viz/start.sh
+```
+plugin root  =  <skill-base-dir>/../..
+               e.g. /home/user/.copilot/plugins/jds/skills/jds-execute
+                 →  /home/user/.copilot/plugins/jds
 ```
 
-On success, `viz/start.sh` prints the URL line — relay it to the user:
+```bash
+PLUGIN_ROOT="<skill-base-dir>/../.."   # substitute the actual path
+
+# Build once if dist/ doesn't exist yet
+[ -f "$PLUGIN_ROOT/viz/dist/server.js" ] || \
+  (cd "$PLUGIN_ROOT/viz" && npm install && npm run build)
+
+# Start (idempotent — returns immediately if already running)
+"$PLUGIN_ROOT/viz/start.sh"
+```
+
+On success, `start.sh` prints the URL line — relay it to the user:
 ```
 Task visualization running at http://localhost:3847
 ```
