@@ -31,7 +31,9 @@ ORDER BY t.created_at;
 
 ### 2. Identify Ready Tasks
 
-A task is **ready** when all its dependencies are `done`:
+**Wave 1:** jds-execute already identified the ready tasks before invoking this skill — use that list directly. Do not re-run the query for the first wave.
+
+**Wave 2+:** After marking the previous wave `done`, re-query to find newly unblocked tasks:
 
 ```sql
 SELECT t.id, t.title FROM todos t
@@ -58,6 +60,12 @@ Even if tasks have no explicit dependencies, check for implicit conflicts:
 Group ready tasks into a wave. Maximum wave size: **4 concurrent subagents**. More than 4 creates diminishing returns and increases resource contention.
 
 ### 2. Dispatch Subagents
+
+Announce the wave before dispatching:
+
+```
+Dispatching Wave N: task-id-a, task-id-b, task-id-c
+```
 
 For each task in the wave, use jds-execute's subagent prompt template with these additions:
 

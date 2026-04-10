@@ -54,22 +54,22 @@ If resuming after an interruption, this query identifies which tasks remain. Ski
 Print the dependency order before starting the loop:
 
 ```sql
-SELECT t.id, t.title, GROUP_CONCAT(td.depends_on, ', ') as depends_on
+SELECT t.id, t.title, GROUP_CONCAT(td.depends_on, ', ') as deps
 FROM todos t
 LEFT JOIN todo_deps td ON td.todo_id = t.id
 GROUP BY t.id
 ORDER BY t.created_at;
 ```
 
-Render it as a plain list so the execution order is visible at a glance:
+Render it sorted topologically — tasks with no dependencies first, then tasks whose dependencies are listed above them. Reference full task IDs, not positional numbers:
 
 ```
 Execution order:
-  [1] task-1-create-validator       (independent)
-  [2] task-2-write-tests            (depends on 1)
-  [3] task-3-add-handler            (depends on 1)
-  [4] task-4-integration-test       (depends on 2, 3)
-  [5] task-5-update-readme          (independent)
+  task-1-create-validator        (no dependencies)
+  task-5-update-readme           (no dependencies)
+  task-2-write-tests             (after: task-1-create-validator)
+  task-3-add-handler             (after: task-1-create-validator)
+  task-4-integration-test        (after: task-2-write-tests, task-3-add-handler)
 ```
 
 Between tasks, report progress:
@@ -207,7 +207,9 @@ AND NOT EXISTS (
 );
 ```
 
-If 3+ tasks are ready simultaneously, announce: "Multiple independent tasks are ready. Using jds-parallel for concurrent execution."
+If 3+ tasks are ready simultaneously, pass the ready task list to jds-parallel — do not let it re-derive them from the same query:
+
+"Multiple independent tasks are ready: [task-id-a, task-id-b, task-id-c]. Using jds-parallel for concurrent execution."
 
 ## No Committing
 
