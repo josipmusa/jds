@@ -5,8 +5,7 @@
     "version": "1.0.0"
   },
   "owner": {
-    "name": "Josip Musa",
-    "email": "josip.musa42@gmail.com"
+    "name": "Josip Musa"
   },
   "plugins": [
     {
@@ -14,8 +13,7 @@
       "description": "JDS — a skill suite for a complete software development lifecycle",
       "version": "1.0.0",
       "author": {
-        "name": "Josip Musa",
-        "email": "josip.musa42@gmail.com"
+        "name": "Josip Musa"
       },
         "source": "./"
     }
