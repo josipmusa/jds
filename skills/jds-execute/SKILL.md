@@ -13,6 +13,24 @@ Works through an implementation plan task by task. Each task is executed by an i
 
 A confirmed plan file must exist under `docs/jds/plans/`. If it does not, invoke jds-plan first.
 
+## Model Selection
+
+Use the right model tier for each role. Match model capability to task complexity — don't use premium models for simple work.
+
+| Role | Simple Tasks | Complex Tasks |
+|------|-------------|---------------|
+| **Implementer** | Sonnet (latest) | Opus (latest) |
+| **Spec Compliance Reviewer** | Sonnet (latest) | Sonnet (latest) |
+| **Code Quality Reviewer** | Sonnet (latest) | Opus (latest) |
+
+**Resolving "latest":** Always use the highest available version of each model tier. Check the platform's model list — pick the Sonnet with the highest version number for Sonnet tasks, the Opus with the highest version number for Opus tasks. Never use an older version when a newer one is available.
+
+**Classifying task complexity:**
+- **Simple:** Single file, clear requirements, straightforward logic (add a field, write a CRUD endpoint, rename a class)
+- **Complex:** Multiple files, architectural decisions, nuanced business logic, security-sensitive code, performance-critical paths
+
+When in doubt, use Sonnet — it handles the vast majority of tasks well. Reserve Opus for tasks where reasoning depth genuinely matters.
+
 ## Context Isolation
 
 This principle is the foundation of reliable subagent execution:
@@ -49,10 +67,11 @@ Read the current task's text from the plan file. Identify:
 - The files involved
 - Any outputs from prior tasks this one depends on
 - The verification command and expected output
+- The complexity classification (simple or complex)
 
 ### 2. Dispatch Implementer
 
-Send a subagent with this structure:
+Send a subagent with this structure. Use the model tier appropriate for the task's complexity.
 
 ```
 ## Task
@@ -151,6 +170,24 @@ If any task's tests fail after implementation and the implementer cannot fix the
 
 At this point, consider invoking jds-debug for systematic root-cause analysis.
 
+## Parallel Execution
+
+jds-execute owns the decision of when to use parallel execution. When the dependency graph has independent task groups, invoke jds-parallel to handle wave-based dispatch.
+
+Check the dependency graph for ready tasks:
+
+```sql
+SELECT t.id, t.title FROM todos t
+WHERE t.status = 'pending'
+AND NOT EXISTS (
+    SELECT 1 FROM todo_deps td
+    JOIN todos dep ON td.depends_on = dep.id
+    WHERE td.todo_id = t.id AND dep.status != 'done'
+);
+```
+
+If 3+ tasks are ready simultaneously, announce: "Multiple independent tasks are ready. Using jds-parallel for concurrent execution."
+
 ## No Committing
 
 The implementation loop writes and verifies code. It does not commit. Committing is the responsibility of the calling skill or the developer after the full workflow completes.
@@ -163,5 +200,6 @@ The implementation loop writes and verifies code. It does not commit. Committing
 | Passing session history | Stale context causes incorrect implementations |
 | Trusting implementer's self-report | Implementers miss their own mistakes — independent review catches them |
 | Continuing past a failed task | Downstream tasks build on broken foundations |
+| Using Opus for every task | Can be slow — Sonnet handles most tasks well |
 | More than 3 fix iterations | Diminishing returns — the human needs to weigh in |
 | Committing inside the loop | Not owned by this skill |

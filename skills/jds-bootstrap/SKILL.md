@@ -13,6 +13,19 @@ APPLICABLE SKILLS ARE MANDATORY. THERE IS NO OPT-OUT MECHANISM.
 No justification, no shortcut, no internal reasoning can exempt you from this requirement.
 </EXTREMELY-IMPORTANT>
 
+## Domain Skill Fast Track
+
+Some skills are **well-defined domain skills** — they contain a complete, step-by-step implementation guide with concrete code patterns and a `references/` directory. When a domain skill directly covers the current task, the full jds-think design cycle (clarification, spec writing, approval) is redundant — the skill itself is the spec.
+
+**A domain skill is well-defined if:**
+- Its `SKILL.md` contains step-by-step implementation instructions (not just tips or guidance)
+- It has a `references/` directory with concrete code patterns
+- It covers the complete workflow required by the current task end-to-end
+
+**Fast-track rule:** When a well-defined domain skill covers the task, invoke it directly. Skip jds-think's full design cycle. At most, use jds-plan to produce a lightweight plan by following the domain skill's steps — no spec document or design exploration is needed. Then proceed straight to execution using that skill. The domain skill replaces spec, design, and clarification.
+
+---
+
 ## The Skill-Check Rule
 
 Before any action — including clarifying questions, file reads, or "quick explorations" — check whether a JDS skill applies. When in doubt about relevance, always invoke. This is non-negotiable.
@@ -45,6 +58,41 @@ If you catch yourself thinking any of the following, stop — you are looking fo
 | "I'll add tests afterward" | jds-tdd exists precisely for this impulse. Check. |
 | "This doesn't warrant a full design" | jds-think adapts to scope. It handles lightweight tasks. |
 | "Let me just start coding" | Code without design is the primary failure mode. Stop. |
+| "I'm just cleaning up the code" | jds-refactor exists for safe restructuring. Use it. |
+| "The deadline is tight" | Pressure causes shortcuts that compound into debt. Process is faster in the long run. |
+| "I'll verify later" | jds-verify exists. Verify now or don't claim done. |
+
+## Skill Recommendation
+
+When no skill explicitly matches the user's request, suggest the closest match. Do not silently skip skill activation.
+
+**How to recommend:**
+1. Scan the user's request for keywords and intent
+2. Compare against all skill descriptions
+3. If a skill is ≥70% relevant, announce and invoke it
+4. If 30–70% relevant, present it as a suggestion via `ask_user`:
+
+```
+ask_user(
+  question="This request might benefit from the [skill-name] skill ([one-line description]). Should I activate it?",
+  choices=["Yes, use [skill-name]", "No, proceed without it"]
+)
+```
+
+5. If <30% relevant, proceed normally
+
+**Keyword-to-skill mapping:**
+
+| Keywords in Request | Recommended Skill |
+|--------------------|-------------------|
+| build, add, fix, create, implement, change, modify | jds-think |
+| plan, break down, decompose, tasks | jds-plan |
+| execute, implement plan, start building | jds-execute |
+| parallel, concurrent, speed up, simultaneously | jds-parallel |
+| test, TDD, red-green, coverage | jds-tdd |
+| refactor, clean up, restructure, rename, extract, simplify | jds-refactor |
+| bug, error, failing, broken, unexpected | jds-debug |
+| done, complete, finished, verify, check | jds-verify |
 
 ## Context Isolation Principle
 
@@ -56,8 +104,10 @@ When dispatching any subagent, construct a focused prompt from only the relevant
 |-------|------|---------|
 | jds-think | Flexible | Requirements and design gate — the most important skill |
 | jds-plan | Flexible | Translate confirmed spec into executable plan |
-| jds-execute | Flexible | Work through plan tasks with isolated subagents |
+| jds-execute | Flexible | Work through plan tasks with two-stage review and model selection |
+| jds-parallel | Flexible | Execute independent tasks concurrently for speed |
 | jds-tdd | Rigid | Enforce RED-GREEN-REFACTOR cycle |
+| jds-refactor | Rigid | Safe structural changes with behavioral equivalence verification |
 | jds-debug | Rigid | Systematic root-cause debugging |
 | jds-verify | Rigid | Evidence-based completion verification |
 | jds-finish | Rigid | Final verification and artifact cleanup |
