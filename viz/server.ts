@@ -48,7 +48,7 @@ async function main(): Promise<void> {
   }
 
   const port = await findFreePort(preferredPort);
-  const html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
 
   writePidFile();
   process.on('exit', removePidFile);
@@ -101,7 +101,11 @@ async function main(): Promise<void> {
     });
   });
 
-  fs.watch(dbPath, () => broadcast());
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  fs.watch(path.dirname(dbPath), () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(broadcast, 200);
+  });
 
   httpServer.listen(port, () => {
     console.log(`Task visualization running at http://localhost:${port}`);

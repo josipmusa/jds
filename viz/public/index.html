@@ -3,100 +3,236 @@
 <head>
 <meta charset="UTF-8">
 <title>JDS Task Graph</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, monospace; overflow: hidden; }
+  body { background: #0d1117; color: #e6edf3; font-family: 'Inter', system-ui, -apple-system, sans-serif; overflow: hidden; }
   #graph { width: 100vw; height: 100vh; }
-  .node circle { stroke: #30363d; stroke-width: 1.5px; cursor: pointer; }
-  .node text { fill: #e6edf3; font-size: 11px; pointer-events: none; text-anchor: middle; }
-  .link { stroke: #30363d; stroke-width: 1.5px; marker-end: url(#arrow); }
-  #legend { position: fixed; bottom: 16px; left: 16px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 10px 14px; font-size: 12px; }
-  .legend-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
-  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-  #status { position: fixed; top: 12px; right: 16px; font-size: 11px; color: #8b949e; }
-  #tooltip { position: fixed; background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px 12px; font-size: 12px; max-width: 260px; pointer-events: none; display: none; }
+  .node rect { stroke-width: 1.5px; cursor: pointer; }
+  .node text { fill: #e6edf3; font-size: 12px; font-family: inherit; pointer-events: none; text-anchor: middle; dominant-baseline: middle; }
+  .link { fill: none; stroke: #388bfd; stroke-width: 1.5px; marker-end: url(#arrow); }
+  @keyframes pulse-glow {
+    0%, 100% { filter: drop-shadow(0 0 3px #1f6feb88); }
+    50%       { filter: drop-shadow(0 0 10px #1f6febcc); }
+  }
+  .node-in_progress { animation: pulse-glow 2s ease-in-out infinite; }
+  #topbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: #161b22; border-bottom: 1px solid #30363d;
+    padding: 8px 16px; display: flex; align-items: center; gap: 12px; z-index: 10;
+  }
+  #progress-label { font-size: 12px; color: #e6edf3; font-weight: 500; white-space: nowrap; min-width: 80px; }
+  #progress-track { flex: 1; height: 4px; background: #21262d; border-radius: 2px; overflow: hidden; }
+  #progress-fill { height: 100%; background: #238636; border-radius: 2px; transition: width 0.4s ease; }
+  #ws-status { font-size: 11px; color: #8b949e; white-space: nowrap; }
+  #legend {
+    position: fixed; bottom: 16px; left: 16px;
+    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+    padding: 10px 14px; font-size: 12px;
+  }
+  .legend-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; color: #8b949e; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  #tooltip {
+    position: fixed; background: #161b22; border: 1px solid #30363d;
+    border-radius: 8px; padding: 10px 14px; font-size: 12px;
+    max-width: 300px; pointer-events: none; display: none; z-index: 20;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .tt-title  { font-weight: 500; color: #e6edf3; margin-bottom: 6px; line-height: 1.4; }
+  .tt-badge  { font-size: 11px; border-radius: 4px; padding: 2px 8px; display: inline-block; }
+  .tt-pending     { background: #21262d; color: #8b949e; }
+  .tt-in_progress { background: #1f3a6e; color: #79c0ff; }
+  .tt-done        { background: #1a3a1f; color: #56d364; }
+  .tt-blocked     { background: #3a1a1a; color: #ff7b72; }
+  #empty-state {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center; display: none; pointer-events: none;
+  }
+  #empty-state h2 { font-size: 18px; color: #8b949e; font-weight: 500; margin-bottom: 8px; }
+  #empty-state p  { font-size: 13px; color: #484f58; }
 </style>
 </head>
 <body>
+
+<div id="topbar">
+  <span id="progress-label">—</span>
+  <div id="progress-track"><div id="progress-fill" style="width:0%"></div></div>
+  <span id="ws-status">connecting…</span>
+</div>
+
 <svg id="graph"></svg>
+
+<div id="empty-state">
+  <h2>No tasks yet</h2>
+  <p>Run jds-plan to get started</p>
+</div>
+
 <div id="legend">
-  <div class="legend-row"><div class="legend-dot" style="background:#6e7681"></div>pending</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#d29922"></div>in_progress</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#21262d;border:1px solid #484f58"></div>pending</div>
+  <div class="legend-row"><div class="legend-dot" style="background:#1f6feb"></div>in progress</div>
   <div class="legend-row"><div class="legend-dot" style="background:#238636"></div>done</div>
   <div class="legend-row"><div class="legend-dot" style="background:#da3633"></div>blocked</div>
 </div>
-<div id="status">connecting…</div>
-<div id="tooltip"></div>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<script>
-const STATUS_COLOR = { pending: '#6e7681', in_progress: '#d29922', done: '#238636', blocked: '#da3633' };
-const statusEl = document.getElementById('status');
-const tooltip = document.getElementById('tooltip');
-const svg = d3.select('#graph');
-let sim, nodes = [], links = [];
 
-function color(status) { return STATUS_COLOR[status] || '#6e7681'; }
+<div id="tooltip">
+  <div class="tt-title"  id="tt-title"></div>
+  <span class="tt-badge" id="tt-badge"></span>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+<script>
+const NODE_W = 160, NODE_H = 40;
+const TOPBAR_H = 37;
+
+const STATUS_COLOR  = { pending: '#21262d', in_progress: '#1f6feb', done: '#238636', blocked: '#da3633' };
+const STATUS_STROKE = { pending: '#484f58', in_progress: '#388bfd', done: '#2ea043', blocked: '#f85149' };
+
+const progressLabel = document.getElementById('progress-label');
+const progressFill  = document.getElementById('progress-fill');
+const wsStatus      = document.getElementById('ws-status');
+const emptyState    = document.getElementById('empty-state');
+const tooltip       = document.getElementById('tooltip');
+const ttTitle       = document.getElementById('tt-title');
+const ttBadge       = document.getElementById('tt-badge');
+
+const svg = d3.select('#graph');
+let gRoot;
+let prevFp = '';
+let lastData = { nodes: [], edges: [] };
+
+function fp(nodes, edges) {
+  const n = nodes.map(d => d.id).sort().join(',');
+  const e = edges.map(d => `${d.source}>${d.target}`).sort().join(',');
+  return `${n}|${e}`;
+}
+
+function trunc(s, max) {
+  return s.length > max ? s.slice(0, max - 1) + '…' : s;
+}
+
+function nodeColor(status)  { return STATUS_COLOR[status]  || '#21262d'; }
+function nodeStroke(status) { return STATUS_STROKE[status] || '#484f58'; }
+
+function updateProgress(nodes) {
+  const total = nodes.length;
+  const done  = nodes.filter(n => n.status === 'done').length;
+  progressLabel.textContent = total === 0 ? 'No tasks' : `${done} / ${total} done`;
+  progressFill.style.width  = (total === 0 ? 0 : Math.round(done / total * 100)) + '%';
+}
+
+function runDagre(nodes, edges) {
+  const dg = new dagre.graphlib.Graph();
+  dg.setGraph({ rankdir: 'TB', ranksep: 70, nodesep: 40, marginx: 40, marginy: 20 });
+  dg.setDefaultEdgeLabel(() => ({}));
+  nodes.forEach(n => dg.setNode(n.id, { width: NODE_W, height: NODE_H }));
+  edges.forEach(e => {
+    if (dg.hasNode(e.source) && dg.hasNode(e.target)) dg.setEdge(e.source, e.target);
+  });
+  dagre.layout(dg);
+  return dg;
+}
 
 function render(data) {
-  nodes = data.nodes;
-  links = data.edges;
-  svg.selectAll('*').remove();
+  lastData = data;
+  const { nodes, edges } = data;
+  updateProgress(nodes);
 
+  if (nodes.length === 0) {
+    svg.selectAll('*').remove();
+    prevFp = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  const curFp = fp(nodes, edges);
   const w = window.innerWidth, h = window.innerHeight;
-  svg.attr('width', w).attr('height', h);
 
-  svg.append('defs').append('marker')
-    .attr('id', 'arrow').attr('viewBox', '0 -4 8 8')
-    .attr('refX', 20).attr('refY', 0)
-    .attr('markerWidth', 6).attr('markerHeight', 6)
-    .attr('orient', 'auto')
-    .append('path').attr('d', 'M0,-4L8,0L0,4').attr('fill', '#30363d');
+  if (curFp !== prevFp) {
+    prevFp = curFp;
+    svg.selectAll('*').remove();
+    svg.attr('width', w).attr('height', h);
 
-  const g = svg.append('g');
-  svg.call(d3.zoom().scaleExtent([0.2, 4]).on('zoom', e => g.attr('transform', e.transform)));
+    svg.append('defs').append('marker')
+      .attr('id', 'arrow')
+      .attr('viewBox', '0 -4 8 8').attr('refX', 8).attr('refY', 0)
+      .attr('markerWidth', 6).attr('markerHeight', 6).attr('orient', 'auto')
+      .append('path').attr('d', 'M0,-4L8,0L0,4').attr('fill', '#388bfd');
 
-  const link = g.append('g').selectAll('line').data(links).join('line').attr('class', 'link');
+    gRoot = svg.append('g');
+    svg.call(
+      d3.zoom().scaleExtent([0.15, 3]).on('zoom', ev => gRoot.attr('transform', ev.transform))
+    );
 
-  const node = g.append('g').selectAll('g').data(nodes).join('g')
-    .attr('class', 'node')
-    .call(d3.drag()
-      .on('start', (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-      .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
-      .on('end', (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }))
-    .on('mouseover', (e, d) => {
-      tooltip.style.display = 'block';
-      tooltip.textContent = d.title;
-    })
-    .on('mousemove', e => {
-      tooltip.style.left = (e.clientX + 12) + 'px';
-      tooltip.style.top = (e.clientY - 8) + 'px';
-    })
-    .on('mouseout', () => { tooltip.style.display = 'none'; });
+    const dg = runDagre(nodes, edges);
+    const gi = dg.graph();
+    const ox = (w - gi.width)  / 2;
+    const oy = (h - gi.height) / 2 + TOPBAR_H / 2;
 
-  node.append('circle').attr('r', 16).attr('fill', d => color(d.status));
-  node.append('text').attr('dy', 28).text(d => d.id.replace(/^task-\d+-/, '').slice(0, 18));
+    gRoot.append('g').selectAll('path')
+      .data(edges.filter(e => dg.hasEdge(e.source, e.target)))
+      .join('path')
+      .attr('class', 'link')
+      .attr('d', e => {
+        const pts = dg.edge(e.source, e.target).points;
+        return d3.line().x(p => p.x + ox).y(p => p.y + oy).curve(d3.curveBasis)(pts);
+      });
 
-  sim = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id(d => d.id).distance(120))
-    .force('charge', d3.forceManyBody().strength(-300))
-    .force('center', d3.forceCenter(w / 2, h / 2))
-    .force('collision', d3.forceCollide(36))
-    .on('tick', () => {
-      link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
-          .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
-      node.attr('transform', d => `translate(${d.x},${d.y})`);
-    });
+    const nodeG = gRoot.append('g').selectAll('g')
+      .data(nodes, d => d.id)
+      .join('g')
+      .attr('class', d => `node node-${d.status}`)
+      .attr('transform', d => {
+        const n = dg.node(d.id);
+        return `translate(${n.x - NODE_W / 2 + ox},${n.y - NODE_H / 2 + oy})`;
+      })
+      .on('mouseover', (ev, d) => {
+        tooltip.style.display = 'block';
+        ttTitle.textContent = d.title;
+        ttBadge.textContent = d.status.replace('_', ' ');
+        ttBadge.className = `tt-badge tt-${d.status}`;
+      })
+      .on('mousemove', ev => {
+        tooltip.style.left = (ev.clientX + 14) + 'px';
+        tooltip.style.top  = (ev.clientY - 10) + 'px';
+      })
+      .on('mouseout', () => { tooltip.style.display = 'none'; });
+
+    nodeG.append('rect')
+      .attr('width', NODE_W).attr('height', NODE_H).attr('rx', 8)
+      .attr('fill', d => nodeColor(d.status))
+      .attr('stroke', d => nodeStroke(d.status));
+
+    nodeG.append('text')
+      .attr('x', NODE_W / 2).attr('y', NODE_H / 2)
+      .text(d => trunc(d.title, 22));
+
+  } else {
+    gRoot.selectAll('.node')
+      .data(nodes, d => d.id)
+      .attr('class', d => `node node-${d.status}`)
+      .select('rect')
+      .transition().duration(400)
+      .attr('fill',   d => nodeColor(d.status))
+      .attr('stroke', d => nodeStroke(d.status));
+  }
 }
 
 function connect() {
   const ws = new WebSocket(`ws://${location.host}`);
-  ws.onopen = () => { statusEl.textContent = 'live'; };
-  ws.onmessage = e => { render(JSON.parse(e.data)); };
-  ws.onclose = () => { statusEl.textContent = 'reconnecting…'; setTimeout(connect, 2000); };
-  ws.onerror = () => ws.close();
+  ws.onopen    = () => { wsStatus.textContent = 'live'; };
+  ws.onmessage = ev => render(JSON.parse(ev.data));
+  ws.onclose   = () => { wsStatus.textContent = 'reconnecting…'; setTimeout(connect, 2000); };
+  ws.onerror   = () => ws.close();
 }
 
-window.addEventListener('resize', () => { if (nodes.length) render({ nodes, edges: links }); });
+window.addEventListener('resize', () => {
+  prevFp = '';
+  render(lastData);
+});
+
 connect();
 </script>
 </body>
