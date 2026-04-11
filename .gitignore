@@ -1,4 +1,4 @@
 .idea
 docs/jds/
-viz/node_modules/
-viz/dist/
+tools/viz/node_modules/
+tools/viz/dist/

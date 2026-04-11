@@ -9,7 +9,7 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "better-sqlite3": "^9.6.0",
+    "better-sqlite3": "^12.8.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {

@@ -4,61 +4,146 @@
 <meta charset="UTF-8">
 <title>JDS Task Graph</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0d1117; color: #e6edf3; font-family: 'Inter', system-ui, -apple-system, sans-serif; overflow: hidden; }
-  #graph { width: 100vw; height: 100vh; }
-  .node rect { stroke-width: 1.5px; cursor: pointer; }
-  .node text { fill: #e6edf3; font-size: 12px; font-family: inherit; pointer-events: none; text-anchor: middle; dominant-baseline: middle; }
-  .link { fill: none; stroke: #388bfd; stroke-width: 1.5px; marker-end: url(#arrow); }
-  @keyframes pulse-glow {
-    0%, 100% { filter: drop-shadow(0 0 3px #1f6feb88); }
-    50%       { filter: drop-shadow(0 0 10px #1f6febcc); }
+
+  body {
+    background-color: #0d1117;
+    background-image: radial-gradient(circle, #21262d 1px, transparent 1px);
+    background-size: 24px 24px;
+    color: #e6edf3;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
   }
-  .node-in_progress { animation: pulse-glow 2s ease-in-out infinite; }
+
+  #graph { width: 100vw; height: 100vh; }
+
+  /* Node styles */
+  .node { cursor: pointer; }
+  .node rect.body { stroke-width: 1.5px; }
+  .node text { font-family: inherit; pointer-events: none; }
+  .node:hover rect.body { filter: brightness(1.25); }
+
+  /* Edge styles */
+  .link { fill: none; stroke-width: 1.5px; }
+  .link-normal { stroke: #30363d; }
+  .link-active {
+    stroke: #388bfd;
+    stroke-dasharray: 7 3;
+    animation: dash-flow 1.2s linear infinite;
+  }
+  .link-done { stroke: #2ea043; opacity: 0.45; }
+
+  @keyframes dash-flow { to { stroke-dashoffset: -10; } }
+
+  /* Node glow animations */
+  @keyframes pulse-blue {
+    0%, 100% { filter: drop-shadow(0 0 4px #1f6feb88) drop-shadow(0 2px 10px #0008); }
+    50%       { filter: drop-shadow(0 0 14px #1f6febdd) drop-shadow(0 2px 10px #0008); }
+  }
+  @keyframes pulse-red {
+    0%, 100% { filter: drop-shadow(0 0 4px #da363366) drop-shadow(0 2px 10px #0008); }
+    50%       { filter: drop-shadow(0 0 10px #da3633aa) drop-shadow(0 2px 10px #0008); }
+  }
+  @keyframes shimmer-green {
+    0%, 100% { filter: drop-shadow(0 0 3px #2ea04333) drop-shadow(0 2px 8px #0008); }
+    50%       { filter: drop-shadow(0 0 8px #2ea04377) drop-shadow(0 2px 8px #0008); }
+  }
+
+  .node-in_progress { animation: pulse-blue 2s ease-in-out infinite; }
+  .node-blocked      { animation: pulse-red  2.5s ease-in-out infinite; }
+  .node-done         { animation: shimmer-green 4s ease-in-out infinite; }
+  .node-pending      { filter: drop-shadow(0 2px 8px #0008); }
+
+  /* Topbar */
   #topbar {
     position: fixed; top: 0; left: 0; right: 0;
-    background: #161b22; border-bottom: 1px solid #30363d;
-    padding: 8px 16px; display: flex; align-items: center; gap: 12px; z-index: 10;
+    background: rgba(13, 17, 23, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid #21262d;
+    padding: 10px 20px;
+    display: flex; align-items: center; gap: 14px; z-index: 10;
+    height: 44px;
   }
-  #progress-label { font-size: 12px; color: #e6edf3; font-weight: 500; white-space: nowrap; min-width: 80px; }
+  #brand { font-size: 13px; font-weight: 600; color: #58a6ff; letter-spacing: 0.05em; white-space: nowrap; }
+  #sep { width: 1px; height: 18px; background: #30363d; flex-shrink: 0; }
+  #progress-label { font-size: 12px; color: #8b949e; white-space: nowrap; min-width: 80px; }
   #progress-track { flex: 1; height: 4px; background: #21262d; border-radius: 2px; overflow: hidden; }
-  #progress-fill { height: 100%; background: #238636; border-radius: 2px; transition: width 0.4s ease; }
-  #ws-status { font-size: 11px; color: #8b949e; white-space: nowrap; }
+  #progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1a7f37, #2ea043, #3fb950);
+    border-radius: 2px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 8px #2ea04355;
+  }
+  #ws-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #6e7681; white-space: nowrap; }
+  #ws-dot { width: 6px; height: 6px; border-radius: 50%; background: #484f58; flex-shrink: 0; transition: background 0.4s; }
+  #ws-dot.live          { background: #2ea043; animation: dot-blink 2.5s ease-in-out infinite; }
+  #ws-dot.reconnecting  { background: #d29922; animation: dot-blink 0.7s ease-in-out infinite; }
+  @keyframes dot-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* Legend */
   #legend {
     position: fixed; bottom: 16px; left: 16px;
-    background: #161b22; border: 1px solid #30363d; border-radius: 8px;
-    padding: 10px 14px; font-size: 12px;
+    background: rgba(13, 17, 23, 0.82);
+    backdrop-filter: blur(16px);
+    border: 1px solid #21262d; border-radius: 10px;
+    padding: 12px 16px; font-size: 12px;
   }
-  .legend-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; color: #8b949e; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .legend-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; color: #6e7681; }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+  /* Tooltip */
   #tooltip {
-    position: fixed; background: #161b22; border: 1px solid #30363d;
-    border-radius: 8px; padding: 10px 14px; font-size: 12px;
-    max-width: 300px; pointer-events: none; display: none; z-index: 20;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    position: fixed;
+    background: rgba(13, 17, 23, 0.96);
+    border: 1px solid #30363d; border-radius: 10px;
+    padding: 12px 16px; font-size: 12px;
+    max-width: 280px; pointer-events: none; display: none; z-index: 20;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+    backdrop-filter: blur(12px);
   }
-  .tt-title  { font-weight: 500; color: #e6edf3; margin-bottom: 6px; line-height: 1.4; }
-  .tt-badge  { font-size: 11px; border-radius: 4px; padding: 2px 8px; display: inline-block; }
-  .tt-pending     { background: #21262d; color: #8b949e; }
-  .tt-in_progress { background: #1f3a6e; color: #79c0ff; }
-  .tt-done        { background: #1a3a1f; color: #56d364; }
-  .tt-blocked     { background: #3a1a1a; color: #ff7b72; }
+  .tt-id    { font-size: 10px; color: #484f58; font-family: monospace; margin-bottom: 4px; }
+  .tt-title { font-weight: 500; color: #e6edf3; margin-bottom: 10px; line-height: 1.4; }
+  .tt-badge { font-size: 11px; border-radius: 5px; padding: 3px 10px; font-weight: 500; display: inline-block; }
+  .tt-pending     { background: #161b22; color: #8b949e; border: 1px solid #30363d; }
+  .tt-in_progress { background: #0d2045; color: #79c0ff; border: 1px solid #388bfd55; }
+  .tt-done        { background: #0a1f10; color: #56d364; border: 1px solid #2ea04355; }
+  .tt-blocked     { background: #200d0d; color: #ff7b72; border: 1px solid #f8514955; }
+
+  /* All-done toast */
+  #done-toast {
+    position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+    background: rgba(13, 17, 23, 0.95);
+    border: 1px solid #2ea043; border-radius: 10px;
+    padding: 12px 22px; font-size: 14px; font-weight: 500;
+    color: #56d364; z-index: 30;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px #2ea04333;
+    backdrop-filter: blur(12px);
+    display: none;
+    white-space: nowrap;
+  }
+
+  /* Hint */
+  #hint { position: fixed; bottom: 16px; right: 16px; font-size: 11px; color: #30363d; }
   #empty-state {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
     text-align: center; display: none; pointer-events: none;
   }
-  #empty-state h2 { font-size: 18px; color: #8b949e; font-weight: 500; margin-bottom: 8px; }
-  #empty-state p  { font-size: 13px; color: #484f58; }
+  #empty-state h2 { font-size: 18px; color: #6e7681; font-weight: 500; margin-bottom: 8px; }
+  #empty-state p  { font-size: 13px; color: #30363d; }
 </style>
 </head>
 <body>
 
 <div id="topbar">
+  <span id="brand">JDS</span>
+  <div id="sep"></div>
   <span id="progress-label">—</span>
   <div id="progress-track"><div id="progress-fill" style="width:0%"></div></div>
-  <span id="ws-status">connecting…</span>
+  <div id="ws-status"><div id="ws-dot"></div><span id="ws-text">connecting…</span></div>
 </div>
 
 <svg id="graph"></svg>
@@ -69,70 +154,189 @@
 </div>
 
 <div id="legend">
-  <div class="legend-row"><div class="legend-dot" style="background:#21262d;border:1px solid #484f58"></div>pending</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#1f6feb"></div>in progress</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#238636"></div>done</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#da3633"></div>blocked</div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#30363d;border:1px solid #484f58"></div>pending</div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#1f6feb"></div>in progress</div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#238636"></div>done</div>
+  <div class="legend-row"><div class="legend-swatch" style="background:#da3633"></div>blocked</div>
 </div>
 
 <div id="tooltip">
-  <div class="tt-title"  id="tt-title"></div>
+  <div class="tt-id"    id="tt-id"></div>
+  <div class="tt-title" id="tt-title"></div>
   <span class="tt-badge" id="tt-badge"></span>
 </div>
 
+<div id="done-toast">🎉 All tasks complete!</div>
+
+<div id="hint">scroll to zoom · drag to pan</div>
+
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 <script>
-const NODE_W = 160, NODE_H = 40;
-const TOPBAR_H = 37;
+const NODE_W  = 188;
+const NODE_H  = 44;
+const ACCENT  = 4;
+const TOPBAR  = 44;
 
-const STATUS_COLOR  = { pending: '#21262d', in_progress: '#1f6feb', done: '#238636', blocked: '#da3633' };
-const STATUS_STROKE = { pending: '#484f58', in_progress: '#388bfd', done: '#2ea043', blocked: '#f85149' };
+const FILL   = { pending: '#0d1117', in_progress: '#0b1d3a', done: '#0a1f10', blocked: '#1c0c0c' };
+const STROKE = { pending: '#484f58', in_progress: '#388bfd', done: '#2ea043',  blocked: '#f85149' };
+const ACCENT_COL = { pending: '#484f58', in_progress: '#1f6feb', done: '#238636', blocked: '#da3633' };
+const ICON   = { pending: '○', in_progress: '◎', done: '✓', blocked: '✗' };
 
-const progressLabel = document.getElementById('progress-label');
-const progressFill  = document.getElementById('progress-fill');
-const wsStatus      = document.getElementById('ws-status');
-const emptyState    = document.getElementById('empty-state');
-const tooltip       = document.getElementById('tooltip');
-const ttTitle       = document.getElementById('tt-title');
-const ttBadge       = document.getElementById('tt-badge');
+const $label  = document.getElementById('progress-label');
+const $fill   = document.getElementById('progress-fill');
+const $dot    = document.getElementById('ws-dot');
+const $wsText = document.getElementById('ws-text');
+const $empty  = document.getElementById('empty-state');
+const $tip    = document.getElementById('tooltip');
+const $tipId  = document.getElementById('tt-id');
+const $tipTitle = document.getElementById('tt-title');
+const $tipBadge = document.getElementById('tt-badge');
 
 const svg = d3.select('#graph');
-let gRoot;
-let prevFp = '';
-let lastData = { nodes: [], edges: [] };
+let gRoot, prevFp = '', lastData = { nodes: [], edges: [] };
+const prevStatus = new Map();
+let wasAllDone   = false;
 
-function fp(nodes, edges) {
-  const n = nodes.map(d => d.id).sort().join(',');
-  const e = edges.map(d => `${d.source}>${d.target}`).sort().join(',');
-  return `${n}|${e}`;
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const topoFp = (nodes, edges) =>
+  nodes.map(d => d.id).sort().join(',') + '|' +
+  edges.map(d => `${d.source}>${d.target}`).sort().join(',');
+
+const trunc = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+
+function edgeCls(e, nodeMap) {
+  const s = nodeMap.get(e.source)?.status;
+  const t = nodeMap.get(e.target)?.status;
+  if (s === 'done' && t === 'done') return 'link link-done';
+  if (s === 'in_progress' || t === 'in_progress') return 'link link-active';
+  return 'link link-normal';
 }
 
-function trunc(s, max) {
-  return s.length > max ? s.slice(0, max - 1) + '…' : s;
+function arrowId(cls) {
+  if (cls.includes('done'))   return 'url(#arr-done)';
+  if (cls.includes('normal')) return 'url(#arr-normal)';
+  return 'url(#arr-active)';
 }
 
-function nodeColor(status)  { return STATUS_COLOR[status]  || '#21262d'; }
-function nodeStroke(status) { return STATUS_STROKE[status] || '#484f58'; }
-
-function updateProgress(nodes) {
-  const total = nodes.length;
-  const done  = nodes.filter(n => n.status === 'done').length;
-  progressLabel.textContent = total === 0 ? 'No tasks' : `${done} / ${total} done`;
-  progressFill.style.width  = (total === 0 ? 0 : Math.round(done / total * 100)) + '%';
-}
-
-function runDagre(nodes, edges) {
+function makeDagre(nodes, edges) {
   const dg = new dagre.graphlib.Graph();
-  dg.setGraph({ rankdir: 'TB', ranksep: 70, nodesep: 40, marginx: 40, marginy: 20 });
+  dg.setGraph({ rankdir: 'TB', ranksep: 90, nodesep: 55, marginx: 70, marginy: 50 });
   dg.setDefaultEdgeLabel(() => ({}));
   nodes.forEach(n => dg.setNode(n.id, { width: NODE_W, height: NODE_H }));
-  edges.forEach(e => {
-    if (dg.hasNode(e.source) && dg.hasNode(e.target)) dg.setEdge(e.source, e.target);
-  });
+  edges.forEach(e => { if (dg.hasNode(e.source) && dg.hasNode(e.target)) dg.setEdge(e.source, e.target); });
   dagre.layout(dg);
   return dg;
 }
+
+function addArrow(defs, id, color) {
+  defs.append('marker')
+    .attr('id', id).attr('viewBox', '0 -4 8 8').attr('refX', 8).attr('refY', 0)
+    .attr('markerWidth', 6).attr('markerHeight', 6).attr('orient', 'auto')
+    .append('path').attr('d', 'M0,-4L8,0L0,4').attr('fill', color);
+}
+
+// Returns Set of node IDs that are ancestors or descendants of nodeId (inclusive).
+function getRelated(nodeId, edges) {
+  const related = new Set([nodeId]);
+
+  // BFS ancestors (upstream dependencies)
+  let frontier = [nodeId];
+  while (frontier.length) {
+    const next = [];
+    for (const id of frontier) {
+      for (const e of edges) {
+        if (e.target === id && !related.has(e.source)) {
+          related.add(e.source); next.push(e.source);
+        }
+      }
+    }
+    frontier = next;
+  }
+
+  // BFS descendants (downstream dependents)
+  frontier = [nodeId];
+  while (frontier.length) {
+    const next = [];
+    for (const id of frontier) {
+      for (const e of edges) {
+        if (e.source === id && !related.has(e.target)) {
+          related.add(e.target); next.push(e.target);
+        }
+      }
+    }
+    frontier = next;
+  }
+  return related;
+}
+
+// Ring flash animation — expands outward as it fades (much more visible).
+function flashNode(g, d) {
+  g.append('rect')
+    .attr('width', NODE_W).attr('height', NODE_H)
+    .attr('x', 0).attr('y', 0).attr('rx', 9)
+    .attr('fill', 'none')
+    .attr('stroke', ACCENT_COL[d.status] || '#fff')
+    .attr('stroke-width', 3)
+    .style('opacity', 0.95)
+    .style('pointer-events', 'none')
+    .transition().duration(750).ease(d3.easeExpOut)
+    .attr('width', NODE_W + 28).attr('height', NODE_H + 28)
+    .attr('x', -14).attr('y', -14).attr('rx', 16)
+    .attr('stroke-width', 0.5)
+    .style('opacity', 0)
+    .remove();
+}
+
+// Confetti burst + toast when all tasks are done.
+function fireConfetti() {
+  if (typeof confetti === 'undefined') return;
+  const colors = ['#388bfd', '#2ea043', '#58a6ff', '#3fb950', '#79c0ff', '#56d364'];
+  confetti({ particleCount: 90,  spread: 70,  origin: { y: 0.6 }, colors });
+  setTimeout(() => confetti({ particleCount: 55, spread: 130, angle: 60,  origin: { y: 0.5 }, colors }), 250);
+  setTimeout(() => confetti({ particleCount: 55, spread: 130, angle: 120, origin: { y: 0.5 }, colors }), 450);
+
+  const toast = document.getElementById('done-toast');
+  toast.style.display = 'block';
+  toast.style.opacity = '1';
+  setTimeout(() => {
+    toast.style.transition = 'opacity 0.8s ease';
+    toast.style.opacity = '0';
+    setTimeout(() => { toast.style.display = 'none'; toast.style.transition = ''; }, 800);
+  }, 3500);
+}
+
+function updateProgress(nodes) {
+  const total = nodes.length, done = nodes.filter(n => n.status === 'done').length;
+  $label.textContent = total === 0 ? 'No tasks' : `${done} / ${total} done`;
+  $fill.style.width  = total === 0 ? '0%' : `${Math.round(done / total * 100)}%`;
+
+  if (total > 0 && done === total) {
+    if (!wasAllDone) { wasAllDone = true; setTimeout(fireConfetti, 350); }
+  } else {
+    wasAllDone = false;
+  }
+}
+
+// Dim all nodes/edges except the hovered chain.
+function applyDim(nodeId) {
+  if (!gRoot) return;
+  const related = getRelated(nodeId, lastData.edges);
+  gRoot.selectAll('.node').style('opacity', d => related.has(d.id) ? 1 : 0.1);
+  gRoot.selectAll('.link').style('opacity', e =>
+    related.has(e.source) && related.has(e.target) ? 1 : 0.05
+  );
+}
+
+function clearDim() {
+  if (!gRoot) return;
+  gRoot.selectAll('.node').style('opacity', null);
+  gRoot.selectAll('.link').style('opacity', null);
+}
+
+// ── Main render ───────────────────────────────────────────────────────────────
 
 function render(data) {
   lastData = data;
@@ -140,46 +344,46 @@ function render(data) {
   updateProgress(nodes);
 
   if (nodes.length === 0) {
-    svg.selectAll('*').remove();
-    prevFp = '';
-    emptyState.style.display = 'block';
-    return;
+    svg.selectAll('*').remove(); prevFp = '';
+    $empty.style.display = 'block'; return;
   }
-  emptyState.style.display = 'none';
+  $empty.style.display = 'none';
 
-  const curFp = fp(nodes, edges);
-  const w = window.innerWidth, h = window.innerHeight;
+  const curFp = topoFp(nodes, edges);
+  const W = window.innerWidth, H = window.innerHeight;
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
 
   if (curFp !== prevFp) {
+    const firstLoad = prevFp === '';
     prevFp = curFp;
     svg.selectAll('*').remove();
-    svg.attr('width', w).attr('height', h);
+    svg.attr('width', W).attr('height', H);
 
-    svg.append('defs').append('marker')
-      .attr('id', 'arrow')
-      .attr('viewBox', '0 -4 8 8').attr('refX', 8).attr('refY', 0)
-      .attr('markerWidth', 6).attr('markerHeight', 6).attr('orient', 'auto')
-      .append('path').attr('d', 'M0,-4L8,0L0,4').attr('fill', '#388bfd');
+    const defs = svg.append('defs');
+    addArrow(defs, 'arr-active', '#388bfd');
+    addArrow(defs, 'arr-done',   '#2ea043');
+    addArrow(defs, 'arr-normal', '#484f58');
 
     gRoot = svg.append('g');
-    svg.call(
-      d3.zoom().scaleExtent([0.15, 3]).on('zoom', ev => gRoot.attr('transform', ev.transform))
-    );
+    svg.call(d3.zoom().scaleExtent([0.1, 3]).on('zoom', ev => gRoot.attr('transform', ev.transform)));
 
-    const dg = runDagre(nodes, edges);
+    const dg = makeDagre(nodes, edges);
     const gi = dg.graph();
-    const ox = (w - gi.width)  / 2;
-    const oy = (h - gi.height) / 2 + TOPBAR_H / 2;
+    const ox = (W - gi.width)  / 2;
+    const oy = (H - gi.height) / 2 + TOPBAR / 2;
 
+    // Edges
     gRoot.append('g').selectAll('path')
       .data(edges.filter(e => dg.hasEdge(e.source, e.target)))
       .join('path')
-      .attr('class', 'link')
+      .attr('class', e => edgeCls(e, nodeMap))
+      .attr('marker-end', e => arrowId(edgeCls(e, nodeMap)))
       .attr('d', e => {
         const pts = dg.edge(e.source, e.target).points;
         return d3.line().x(p => p.x + ox).y(p => p.y + oy).curve(d3.curveBasis)(pts);
       });
 
+    // Nodes
     const nodeG = gRoot.append('g').selectAll('g')
       .data(nodes, d => d.id)
       .join('g')
@@ -188,50 +392,107 @@ function render(data) {
         const n = dg.node(d.id);
         return `translate(${n.x - NODE_W / 2 + ox},${n.y - NODE_H / 2 + oy})`;
       })
+      .style('opacity', firstLoad ? 0 : 1)
       .on('mouseover', (ev, d) => {
-        tooltip.style.display = 'block';
-        ttTitle.textContent = d.title;
-        ttBadge.textContent = d.status.replace('_', ' ');
-        ttBadge.className = `tt-badge tt-${d.status}`;
+        clearDim(); applyDim(d.id);
+        $tip.style.display  = 'block';
+        $tipId.textContent    = d.id;
+        $tipTitle.textContent = d.title;
+        $tipBadge.textContent = d.status.replace('_', ' ');
+        $tipBadge.className   = `tt-badge tt-${d.status}`;
       })
       .on('mousemove', ev => {
-        tooltip.style.left = (ev.clientX + 14) + 'px';
-        tooltip.style.top  = (ev.clientY - 10) + 'px';
+        $tip.style.left = `${ev.clientX + 18}px`;
+        $tip.style.top  = `${ev.clientY - 14}px`;
       })
-      .on('mouseout', () => { tooltip.style.display = 'none'; });
+      .on('mouseout', () => { clearDim(); $tip.style.display = 'none'; });
 
+    // Body rect
     nodeG.append('rect')
-      .attr('width', NODE_W).attr('height', NODE_H).attr('rx', 8)
-      .attr('fill', d => nodeColor(d.status))
-      .attr('stroke', d => nodeStroke(d.status));
+      .attr('class', 'body')
+      .attr('width', NODE_W).attr('height', NODE_H).attr('rx', 9)
+      .attr('fill',   d => FILL[d.status]   || '#0d1117')
+      .attr('stroke', d => STROKE[d.status] || '#484f58');
 
+    // Left accent bar (clipped to body shape)
+    nodeG.each(function(d) {
+      const g   = d3.select(this);
+      const cid = 'c-' + d.id.replace(/\W/g, '-');
+      g.append('clipPath').attr('id', cid)
+        .append('rect').attr('width', NODE_W).attr('height', NODE_H).attr('rx', 9);
+      g.append('rect')
+        .attr('class', 'accent')
+        .attr('clip-path', `url(#${cid})`)
+        .attr('width', ACCENT).attr('height', NODE_H)
+        .attr('fill', ACCENT_COL[d.status] || '#484f58');
+    });
+
+    // Status icon
     nodeG.append('text')
-      .attr('x', NODE_W / 2).attr('y', NODE_H / 2)
-      .text(d => trunc(d.title, 22));
+      .attr('x', ACCENT + 10).attr('y', NODE_H / 2)
+      .attr('dominant-baseline', 'middle').attr('text-anchor', 'start')
+      .attr('font-size', 13).attr('fill', d => ACCENT_COL[d.status] || '#484f58')
+      .text(d => ICON[d.status] || '○');
+
+    // Title
+    nodeG.append('text')
+      .attr('x', ACCENT + 26).attr('y', NODE_H / 2)
+      .attr('dominant-baseline', 'middle').attr('text-anchor', 'start')
+      .attr('font-size', 12).attr('fill', '#e6edf3')
+      .text(d => trunc(d.title, 19));
+
+    // Staggered entrance on first load
+    if (firstLoad) {
+      nodeG.transition()
+        .delay((d, i) => Math.min(i * 35, 800))
+        .duration(450).ease(d3.easeCubicOut)
+        .style('opacity', 1);
+    }
+
+    // Seed prevStatus (no flash on initial render)
+    nodes.forEach(n => prevStatus.set(n.id, n.status));
 
   } else {
+    // Topology unchanged — update visuals in-place
     gRoot.selectAll('.node')
       .data(nodes, d => d.id)
       .attr('class', d => `node node-${d.status}`)
-      .select('rect')
-      .transition().duration(400)
-      .attr('fill',   d => nodeColor(d.status))
-      .attr('stroke', d => nodeStroke(d.status));
+      .each(function(d) {
+        const g = d3.select(this);
+
+        // Flash ring if status changed
+        if (prevStatus.get(d.id) !== undefined && prevStatus.get(d.id) !== d.status) {
+          flashNode(g, d);
+        }
+        prevStatus.set(d.id, d.status);
+
+        g.select('rect.body').transition().duration(500)
+          .attr('fill', FILL[d.status] || '#0d1117')
+          .attr('stroke', STROKE[d.status] || '#484f58');
+        g.select('rect.accent').transition().duration(500)
+          .attr('fill', ACCENT_COL[d.status] || '#484f58');
+        g.selectAll('text').filter((_, i) => i === 0)
+          .attr('fill', ACCENT_COL[d.status] || '#484f58')
+          .text(ICON[d.status] || '○');
+      });
+
+    // Re-classify edges
+    gRoot.selectAll('.link')
+      .data(edges)
+      .attr('class', e => edgeCls(e, nodeMap))
+      .attr('marker-end', e => arrowId(edgeCls(e, nodeMap)));
   }
 }
 
 function connect() {
   const ws = new WebSocket(`ws://${location.host}`);
-  ws.onopen    = () => { wsStatus.textContent = 'live'; };
+  ws.onopen    = () => { $dot.className = 'live';         $wsText.textContent = 'live'; };
   ws.onmessage = ev => render(JSON.parse(ev.data));
-  ws.onclose   = () => { wsStatus.textContent = 'reconnecting…'; setTimeout(connect, 2000); };
+  ws.onclose   = () => { $dot.className = 'reconnecting'; $wsText.textContent = 'reconnecting…'; setTimeout(connect, 2000); };
   ws.onerror   = () => ws.close();
 }
 
-window.addEventListener('resize', () => {
-  prevFp = '';
-  render(lastData);
-});
+window.addEventListener('resize', () => { prevFp = ''; render(lastData); });
 
 connect();
 </script>
