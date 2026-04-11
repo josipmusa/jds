@@ -72,8 +72,6 @@ For each task in the wave, use jds-execute's subagent prompt template with these
 - Add an **Isolation Notice** to the prompt:
   > You are one of [N] parallel agents. Other agents are working on different tasks simultaneously. Do NOT modify any file outside your task's scope. If you discover a need to change a file not listed in your task, STOP and report it — do not make the change.
 
-- Include the **Status Protocol** (DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED) as defined in jds-execute.
-
 Dispatch all tasks in the wave using background mode.
 
 ### 3. Collect Results
@@ -83,10 +81,9 @@ Wait for all subagents in the wave to complete. For each:
 - Note all files created or modified
 - Check for unexpected file modifications outside the task's declared scope
 
-**Handle non-DONE statuses:**
-- **DONE_WITH_CONCERNS:** Review concerns, decide with human before proceeding.
-- **NEEDS_CONTEXT:** Pull from the wave. Provide context and re-dispatch sequentially.
-- **BLOCKED:** Pull from the wave. Surface to human. Consider jds-debug.
+**Handle incomplete tasks:**
+- **ISSUES (compliance review):** Re-dispatch for fixes per jds-execute's issue-handling loop (max 3 iterations). If still failing after 3, pull from the wave and surface to human.
+- **BLOCKED (cannot proceed):** Pull from the wave. Surface to human. Consider jds-debug.
 
 ### 4. Conflict Detection
 
@@ -97,7 +94,7 @@ After a wave completes, check for conflicts:
 
 ### 5. Review
 
-Apply jds-execute's two-stage review (spec compliance → code quality) to the wave as a batch. Both stages must pass. The review prompts are the same as jds-execute's, with one addition to Stage 1:
+Apply jds-execute's compliance review to each task in the wave. Use the same review prompt as jds-execute, with one addition:
 
 > **Conflict Check:** Verify no file was modified by multiple tasks. Verify each task stayed within its declared file scope.
 
