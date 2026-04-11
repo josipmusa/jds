@@ -26,6 +26,18 @@ Before asking the user anything, understand the current state:
 
 Arrive at the conversation already informed. The user should not have to explain their own codebase to you.
 
+**After completing exploration, classify the task:**
+
+| Tier | Criteria |
+|------|----------|
+| **Trivial** | Single, unambiguous change in one location; full scope fits in one sentence; zero open questions |
+| **Moderate** | Well-defined scope, clear patterns to follow, few files affected |
+| **Complex** | Multiple systems, architectural decisions, unclear requirements, security/performance implications |
+
+**When in doubt, treat as Moderate or Complex.** Only classify as Trivial when BOTH are true: the full scope fits in one sentence, AND there is zero ambiguity about what to do.
+
+**Short pass for Trivial tasks:** Skip Steps 3–5. Replace Steps 6–8 with a single `ask_user` confirmation describing the change in one sentence. Then proceed directly to jds-tdd — skip jds-plan. If the user responds with adjustments or questions that introduce ambiguity, immediately re-classify and resume the full flow.
+
 ### Step 2: Assess Scope
 
 Before asking detailed questions, evaluate whether the request is appropriately scoped:
@@ -80,11 +92,11 @@ Before writing, ensure `docs/jds/` is present in `.gitignore`. If it is not, add
 ## Modules/Components Affected
 - [List each file or module that will be created or modified]
 
-## API Contract Changes
-[Endpoints, request/response shapes — or "None" if no API changes]
+## Interface Changes
+[Public API endpoints, component props/contracts, function signatures, CLI commands, events — or "None"]
 
-## Data Model Changes
-[Schema changes, new tables/fields — or "None" if no data model changes]
+## Data / State Changes
+[Schema changes, new tables/fields, state shape, store structure, configuration — or "None"]
 
 ## Testing Strategy
 - **Unit:** [What gets unit tested]

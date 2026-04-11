@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# SessionEnd hook for JDS plugin
+# Stops the viz server if it is running.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+bash "${PLUGIN_ROOT}/tools/viz/stop.sh"
+
+exit 0

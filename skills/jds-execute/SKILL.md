@@ -13,6 +13,36 @@ Works through an implementation plan task by task. Each task is executed by an i
 
 A confirmed plan file must exist under `docs/jds/plans/`. If it does not, invoke jds-plan first.
 
+## Visualization
+
+Before the task loop, start the viz server. All paths are inside the JDS plugin,
+not the user's project — derive the plugin root from this skill's base directory
+(shown in the header above when the skill loaded):
+
+```
+plugin root  =  <skill-base-dir>/../..
+               e.g. /home/user/.copilot/plugins/jds/skills/jds-execute
+                 →  /home/user/.copilot/plugins/jds
+```
+
+```bash
+PLUGIN_ROOT="<skill-base-dir>/../.."   # substitute the actual path
+
+# Build once if dist/ doesn't exist yet
+[ -f "$PLUGIN_ROOT/tools/viz/dist/server.js" ] || \
+  (cd "$PLUGIN_ROOT/tools/viz" && npm install && npm run build)
+
+# Start (idempotent — returns immediately if already running)
+"$PLUGIN_ROOT/tools/viz/start.sh"
+```
+
+On success, `start.sh` prints the URL line — relay it to the user:
+```
+Task visualization running at http://localhost:3847
+```
+
+If port 3847 is taken the server picks the next free one. The server is stopped automatically by the SessionEnd hook when the session ends.
+
 ## Model Selection
 
 Use the right model tier for each role. Match model capability to task complexity — don't use premium models for simple work.
