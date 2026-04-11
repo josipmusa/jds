@@ -7,6 +7,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-bash "${PLUGIN_ROOT}/viz/stop.sh"
+bash "${PLUGIN_ROOT}/tools/viz/stop.sh"
 
 exit 0

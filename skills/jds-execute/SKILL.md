@@ -29,11 +29,11 @@ plugin root  =  <skill-base-dir>/../..
 PLUGIN_ROOT="<skill-base-dir>/../.."   # substitute the actual path
 
 # Build once if dist/ doesn't exist yet
-[ -f "$PLUGIN_ROOT/viz/dist/server.js" ] || \
-  (cd "$PLUGIN_ROOT/viz" && npm install && npm run build)
+[ -f "$PLUGIN_ROOT/tools/viz/dist/server.js" ] || \
+  (cd "$PLUGIN_ROOT/tools/viz" && npm install && npm run build)
 
 # Start (idempotent — returns immediately if already running)
-"$PLUGIN_ROOT/viz/start.sh"
+"$PLUGIN_ROOT/tools/viz/start.sh"
 ```
 
 On success, `start.sh` prints the URL line — relay it to the user:
