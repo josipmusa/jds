@@ -88,6 +88,8 @@ The UI shows each task as a node, colored by status:
 
 Edges represent dependencies — an arrow from A to B means B depends on A. The graph updates live via WebSocket as tasks change state. If port 3847 is in use, the server picks the next free port automatically.
 
+Note: The visualization server may take longer to complete npm install and npm run build, depending on your environment. To avoid delays, you can run these steps in advance to generate the dist/ folder, or instruct your agent to execute them before starting your first JDS session.
+
 ## Installation
 
 ### Step 1: Add the marketplace
