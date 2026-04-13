@@ -26,17 +26,27 @@ Before asking the user anything, understand the current state:
 
 Arrive at the conversation already informed. The user should not have to explain their own codebase to you.
 
-**After completing exploration, classify the task:**
+**After completing exploration, classify the task into exactly one tier:**
 
-| Tier | Criteria |
-|------|----------|
-| **Trivial** | Single, unambiguous change in one location; full scope fits in one sentence; zero open questions |
-| **Moderate** | Well-defined scope, clear patterns to follow, few files affected |
-| **Complex** | Multiple systems, architectural decisions, unclear requirements, security/performance implications |
+| Tier | Criteria | Examples |
+|------|----------|----------|
+| **Trivial** | A single, mechanical change in one file; full scope fits in one sentence; zero open questions; no design judgment needed | Fix a typo, update a version number, rename a variable, add a log line |
+| **Moderate** | Well-defined scope, clear patterns to follow, few files affected; may require some judgment but the path forward is obvious | Add a new field to an existing model, implement a method following an established pattern, write a straightforward endpoint |
+| **Complex** | Multiple systems, architectural decisions, unclear requirements, security/performance implications | New subsystem, cross-cutting refactor, performance-critical changes, new integration |
 
-**When in doubt, treat as Moderate or Complex.** Only classify as Trivial when BOTH are true: the full scope fits in one sentence, AND there is zero ambiguity about what to do.
+**When in doubt, always round UP.** If you're torn between Trivial and Moderate, choose Moderate. If torn between Moderate and Complex, choose Complex. Never hedge with combined labels like "Trivial to Moderate" — pick exactly one tier.
 
-**Short pass for Trivial tasks:** Skip Steps 3–5. Replace Steps 6–8 with a single `ask_user` confirmation describing the change in one sentence. Then proceed directly to jds-tdd — skip jds-plan. If the user responds with adjustments or questions that introduce ambiguity, immediately re-classify and resume the full flow.
+**Only classify as Trivial when ALL of these are true:**
+1. The full scope fits in one sentence
+2. There is zero ambiguity about what to do
+3. It touches a single file in a single location
+4. No design judgment is needed — a find-and-replace could almost do it
+
+**Trivial path:** Skip Steps 3–5. Replace Steps 6–8 with a single `ask_user` confirmation describing the change in one sentence. Then proceed directly to jds-tdd — skip jds-plan. If the user responds with adjustments or questions that introduce ambiguity, immediately re-classify as Moderate and resume the full flow.
+
+**Moderate path:** Skip Steps 4–5 (approach selection and sectional design review). Skip Steps 6–8 (no spec document needed — the task is clear enough). After Step 3 (clarifying questions, if any), proceed directly to jds-plan. The plan provides sufficient structure for well-defined tasks. From jds-plan, continue the normal pipeline: jds-execute → jds-verify → jds-finish.
+
+**Complex path:** Follow all steps (1–9) without skipping anything.
 
 ### Step 2: Assess Scope
 

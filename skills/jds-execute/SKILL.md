@@ -32,8 +32,13 @@ PLUGIN_ROOT="<skill-base-dir>/../.."   # substitute the actual path
 [ -f "$PLUGIN_ROOT/tools/viz/dist/server.js" ] || \
   (cd "$PLUGIN_ROOT/tools/viz" && npm install && npm run build)
 
+# Resolve the current session's DB path from the session folder.
+# The session folder is provided in the session context header
+# (e.g. /home/user/.copilot/session-state/<session-id>).
+SESSION_DB="<session-folder>/session.db"
+
 # Start (idempotent — returns immediately if already running)
-"$PLUGIN_ROOT/tools/viz/start.sh"
+"$PLUGIN_ROOT/tools/viz/start.sh" --db "$SESSION_DB"
 ```
 
 On success, `start.sh` prints the URL line — relay it to the user:

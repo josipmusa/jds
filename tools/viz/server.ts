@@ -7,7 +7,12 @@ import { resolveDbPath, readGraph } from './db.js';
 import { buildGraph } from './graph.js';
 
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
-const PID_FILE = '/tmp/jds-viz.pid';
+
+function pidFileForDb(dbPath: string): string {
+  // Derive a stable key from the session DB path (use the session UUID directory name)
+  const sessionDir = path.basename(path.dirname(dbPath));
+  return `/tmp/jds-viz-${sessionDir}.pid`;
+}
 
 function parseArgs(): { port: number; dbPath: string } {
   const args = process.argv.slice(2);
@@ -31,12 +36,12 @@ function findFreePort(start: number): Promise<number> {
   });
 }
 
-function writePidFile(): void {
-  fs.writeFileSync(PID_FILE, String(process.pid));
+function writePidFile(pidFile: string): void {
+  fs.writeFileSync(pidFile, String(process.pid));
 }
 
-function removePidFile(): void {
-  try { fs.unlinkSync(PID_FILE); } catch { /* already gone */ }
+function removePidFile(pidFile: string): void {
+  try { fs.unlinkSync(pidFile); } catch { /* already gone */ }
 }
 
 async function main(): Promise<void> {
@@ -47,11 +52,12 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  const pidFile = pidFileForDb(dbPath);
   const port = await findFreePort(preferredPort);
   const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
 
-  writePidFile();
-  process.on('exit', removePidFile);
+  writePidFile(pidFile);
+  process.on('exit', () => removePidFile(pidFile));
   process.on('SIGTERM', () => process.exit(0));
   process.on('SIGINT', () => process.exit(0));
 
