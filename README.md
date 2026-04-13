@@ -69,6 +69,25 @@ Every task passes through this pipeline. Simple tasks get a lightweight pass. Co
 | **code-review** | Reviews current branch or a specific PR |
 | **security-audit-review** | Deep security audit — read-only, produces a report |
 
+## Visualization
+
+JDS ships a task graph visualization server (`tools/viz`) that renders your session's todo dependency graph in real time. It starts automatically when `jds-execute` begins and shuts down when the session ends.
+
+```
+Task visualization running at http://localhost:3847
+```
+
+The UI shows each task as a node, colored by status:
+
+| Color | Status |
+|-------|--------|
+| 🔵 Blue (pulsing) | `in_progress` |
+| 🔴 Red (pulsing) | `blocked` |
+| 🟢 Green | `done` |
+| ⬜ Neutral | `pending` |
+
+Edges represent dependencies — an arrow from A to B means B depends on A. The graph updates live via WebSocket as tasks change state. If port 3847 is in use, the server picks the next free port automatically.
+
 ## Installation
 
 ### Step 1: Add the marketplace
