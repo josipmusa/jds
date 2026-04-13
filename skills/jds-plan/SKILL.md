@@ -1,6 +1,6 @@
 ---
 name: jds-plan
-description: Use after a spec has been confirmed via jds-think, to translate it into an executable implementation plan. Requires a spec file to exist under docs/jds/specs/. Invoke when transitioning from design to implementation, or when the user asks to plan how to build something that already has a spec.
+description: Use after a spec has been confirmed via jds-think, to translate it into an executable implementation plan. Requires a spec file to exist under docs/jds/specs/. Invoke when transitioning from design to implementation, or when the user asks to plan how to build something that already has a spec. Also invoke for Moderate tasks that skip the spec phase — jds-plan can work directly from jds-think's exploration context.
 ---
 
 # JDS Plan
@@ -11,7 +11,13 @@ Translates a confirmed spec into an executable implementation plan. Every plan t
 
 ## Prerequisites
 
-A confirmed spec file must exist under `docs/jds/specs/`. If it does not, invoke jds-think first. Do not create a plan from verbal agreements or chat history alone — the spec file is the source of truth.
+**Standard path (Complex tasks):** A confirmed spec file must exist under `docs/jds/specs/`. If it does not, invoke jds-think first. Do not create a plan from verbal agreements or chat history alone — the spec file is the source of truth.
+
+**Specless path (Moderate tasks):** When jds-think classified the task as Moderate and skipped the spec phase, jds-plan is invoked directly. In this case:
+- No spec file is required
+- The plan is built from jds-think's exploration context and any clarifying answers from the user
+- The plan document's `Spec:` field should read `N/A — Moderate task, spec skipped per jds-think classification`
+- All other plan rules (file map, task granularity, TDD structure, no-placeholders, verification commands) still apply in full
 
 ## Flow
 
@@ -100,7 +106,7 @@ If a task can't be executed from its text alone, it isn't done yet.
 > Committing and pushing are not part of this plan — that is handled by the caller or the developer.
 
 **Goal:** [one sentence]
-**Spec:** [path to spec document]
+**Spec:** [path to spec document, or "N/A — Moderate task, spec skipped per jds-think classification"]
 **Modules affected:** [list]
 **Execution order:** [task dependencies if any]
 
@@ -132,7 +138,7 @@ Save to `docs/jds/plans/YYYY-MM-DD-<feature-name>.md`. Do NOT commit this file.
 
 Review the plan inline before handing off. No subagent needed. Four checks:
 
-1. **Requirement traceability:** Go through the spec section by section. Every requirement should map to at least one task. Add tasks for anything that fell through the cracks.
+1. **Spec coverage:** If a spec exists, skim each requirement in the spec. Can you point to a task that implements it? List any gaps and add missing tasks. If no spec (Moderate path), verify that the plan covers the full scope discussed during jds-think exploration.
 2. **Completeness scan:** Find every instance of the placeholder patterns above. A plan with even one deferred decision or handwaved step is not ready to execute.
 3. **Symbol consistency:** Pick any identifier defined in an early task — method name, type, property. Does every later task that references it use the exact same name? Drift here causes integration failures.
 4. **Verifiability:** Every task needs a command that concretely confirms it worked. "Run the test" is not sufficient — specify the exact command and what its output should say.
