@@ -19,13 +19,17 @@ JDS fixes this by enforcing a skill-based workflow that gates every phase of dev
 ## The Workflow
 
 ```
+Session start
+    ↓
+jds-bootstrap   → Auto-injected via the SessionStart hook. Enforces the skill-check rule.
+    ↓
 User Request
     ↓
 jds-think       → Explore, clarify, design, write spec
     ↓
 jds-plan        → Break spec into atomic, verifiable tasks
     ↓
-jds-execute     → Execute tasks via isolated subagents
+jds-execute     → Worker-pool scheduler dispatches tasks to isolated subagents
     ├── jds-tdd     → RED → GREEN → REFACTOR (every time)
     └── jds-debug   → Systematic root-cause analysis (when things break)
     ↓
@@ -43,8 +47,7 @@ Every task passes through this pipeline. Simple tasks get a lightweight pass. Co
 | **jds-bootstrap** | Flexible | Session entry point. Enforces skill-check before any action. |
 | **jds-think** | Flexible | The design gate. Explores codebase, asks clarifying questions, proposes approaches, writes specs. |
 | **jds-plan** | Flexible | Translates specs into atomic tasks (2-5 min each). No placeholders, no hand-waving. |
-| **jds-execute** | Flexible | Runs tasks via isolated subagents. Each gets only what it needs — never session history. |
-| **jds-parallel** | Flexible | Wave-based parallel dispatch for independent tasks. Handles conflict detection and sequential fallback. |
+| **jds-execute** | Flexible | Runs tasks via a worker-pool scheduler of isolated subagents. Tops up freed slots the moment any subagent completes — independent tasks run concurrently up to a configurable cap. |
 | **jds-tdd** | Rigid | Enforces RED-GREEN-REFACTOR. Tests first, always. Code written before tests? Delete it. |
 | **jds-refactor** | Rigid | Safe structural changes with behavioral equivalence verification. Tests must pass before and after. |
 | **jds-debug** | Rigid | 4-phase root-cause analysis: Investigate → Analyze → Hypothesize → Fix. No symptom-patching. |
@@ -113,7 +116,7 @@ Or, from within an interactive Copilot CLI session, use the slash command equiva
 
 ## Quick Start
 
-Once installed, JDS activates automatically at session start - no need to invoke skills manually. The typical flow for any non-trivial task:
+Once installed, JDS activates automatically at session start — the `SessionStart` hook (defined in `hooks/hooks.json`) injects the `jds-bootstrap` skill context into every new session, so you never have to invoke skills manually. The typical flow for any non-trivial task:
 
 ```
 jds-think      → clarify requirements, write a spec

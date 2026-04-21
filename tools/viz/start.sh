@@ -2,6 +2,8 @@
 # Start the jds-viz server in the background.
 # Supports multiple concurrent sessions — each gets its own server and port.
 # Idempotent: does nothing if already running for the same session.
+# Self-bootstrapping: runs `npm install` + `npm run build` when dist/ is
+# missing or any TypeScript source is newer than the built output.
 # Prints the URL line on success.
 #
 # Usage: viz/start.sh --db PATH [--port N]
@@ -36,9 +38,29 @@ if [[ -f "$PID_FILE" ]] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
   exit 0
 fi
 
+# --- Build check ---------------------------------------------------------
+# Build when dist/server.js is missing OR any *.ts source is newer than it.
+DIST_ENTRY="${SCRIPT_DIR}/dist/server.js"
+NEEDS_BUILD=false
+if [[ ! -f "$DIST_ENTRY" ]]; then
+  NEEDS_BUILD=true
+else
+  for src in "${SCRIPT_DIR}"/*.ts "${SCRIPT_DIR}"/tsconfig.json "${SCRIPT_DIR}"/package.json; do
+    [[ -e "$src" ]] || continue
+    if [[ "$src" -nt "$DIST_ENTRY" ]]; then
+      NEEDS_BUILD=true
+      break
+    fi
+  done
+fi
+if $NEEDS_BUILD; then
+  ( cd "$SCRIPT_DIR" && npm install --silent && npm run build --silent ) >&2
+fi
+# -------------------------------------------------------------------------
+
 rm -f "$PID_FILE" "$LOG_FILE"
 
-nohup node "${SCRIPT_DIR}/dist/server.js" "${EXTRA_ARGS[@]}" > "$LOG_FILE" 2>&1 &
+nohup node "$DIST_ENTRY" "${EXTRA_ARGS[@]}" > "$LOG_FILE" 2>&1 &
 disown $! 2>/dev/null || true
 
 # Wait for the URL line (up to 5 seconds)

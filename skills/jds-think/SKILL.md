@@ -1,13 +1,13 @@
 ---
 name: jds-think
-description: Use before writing any code, asking clarifying questions, or taking any action on a task. This is the exploration, communication, and design gate — the most important skill in the suite. Every task passes through it, regardless of perceived simplicity. Invoke whenever implementation work is about to begin, when requirements are unclear, or when the user asks to build, add, fix, or change something. Also invoke for lightweight tasks that don't need a full design — jds-think scales down.
+description: Use before writing any code, asking clarifying questions, or taking any action on a task. This is the exploration, communication, and design gate — the most important skill in the suite. Every task that does not match a well-defined domain skill (per jds-bootstrap's Domain Skill Fast Track) passes through it, regardless of perceived simplicity. Invoke whenever implementation work is about to begin, when requirements are unclear, or when the user asks to build, add, fix, or change something. Also invoke for lightweight tasks that don't need a full design — jds-think scales down.
 ---
 
 # JDS Think
 
 **Type: Flexible** — adapt to project context, but the structure must be followed.
 
-This is the most important skill in the JDS suite. It handles exploration, communication, and design. Getting this right prevents wasted implementation cycles. Every task passes through this gate — simple tasks get a short pass through it, complex tasks get a thorough one.
+This is the most important skill in the JDS suite. It handles exploration, communication, and design. Getting this right prevents wasted implementation cycles. Every task passes through this gate — simple tasks get a short pass through it, complex tasks get a thorough one — **unless the task is fully covered by a well-defined domain skill** (see jds-bootstrap's Domain Skill Fast Track), in which case the domain skill replaces this gate.
 
 **ask_user rule:** Every question to the user MUST go through the `ask_user` tool. Never ask questions by ending a message with plain text. This includes design confirmations, approach decisions, and spec approval.
 

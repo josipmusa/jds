@@ -61,6 +61,8 @@ If you catch yourself thinking any of the following, stop — you are looking fo
 | "I'm just cleaning up the code" | jds-refactor exists for safe restructuring. Use it. |
 | "The deadline is tight" | Pressure causes shortcuts that compound into debt. Process is faster in the long run. |
 | "I'll verify later" | jds-verify exists. Verify now or don't claim done. |
+| "I'll just run these in parallel myself in one turn" | jds-execute's scheduler loop owns concurrent dispatch. Use it — even for two tasks. |
+| "Only a couple of ready tasks, not worth the scheduler" | The scheduler runs for any N≥1. Concurrency=1 is the sequential case. There is no separate path. |
 
 ## Skill Recommendation
 
@@ -87,8 +89,7 @@ ask_user(
 |--------------------|-------------------|
 | build, add, fix, create, implement, change, modify | jds-think |
 | plan, break down, decompose, tasks | jds-plan |
-| execute, implement plan, start building | jds-execute |
-| parallel, concurrent, speed up, simultaneously | jds-parallel |
+| execute, implement plan, start building, parallel, concurrent, simultaneously | jds-execute |
 | test, TDD, red-green, coverage | jds-tdd |
 | refactor, clean up, restructure, rename, extract, simplify | jds-refactor |
 | bug, error, failing, broken, unexpected | jds-debug |
@@ -104,8 +105,7 @@ When dispatching any subagent, construct a focused prompt from only the relevant
 |-------|------|---------|
 | jds-think | Flexible | Requirements and design gate — the most important skill |
 | jds-plan | Flexible | Translate confirmed spec into executable plan |
-| jds-execute | Flexible | Work through plan tasks with two-stage review and model selection |
-| jds-parallel | Flexible | Execute independent tasks concurrently for speed |
+| jds-execute | Flexible | Work through plan tasks via a worker-pool scheduler with two-stage review and model selection |
 | jds-tdd | Rigid | Enforce RED-GREEN-REFACTOR cycle |
 | jds-refactor | Rigid | Safe structural changes with behavioral equivalence verification |
 | jds-debug | Rigid | Systematic root-cause debugging |
